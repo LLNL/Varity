@@ -334,7 +334,7 @@ class Program():
         c = c + "  compute(" + self.printFunctionParameters() + ");\n"
         c = c + "\n  return 0;\n"
         c = c + "}\n"
-        return c
+        return (c, getVarsList())
         
 if __name__ == "__main__":
     p = Program()

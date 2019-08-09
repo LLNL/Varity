@@ -1,18 +1,28 @@
-import program_tree
+import gen_program
 import os
 import subprocess
 
 NUM_GROUPS = 1
 TESTS_PER_GROUP = 2
 COMPILERS = [("clang-7.0", "/Users/lagunaperalt1/projects/GPU_work/latest_llvm/llvm-7.0/install/bin/clang"), ("gcc-7", "/opt/local/bin/gcc-mp-7")]
-OPT_LEVELS = ["-O0", "-O1", "-O2", "-O3"]
+OPT_LEVELS = ["-O0", "-O1"]
 TESTS_DIR = "_tests"
 
-def writeProgramCode(fileName):
-    p = program_tree.Program()
+def writeProgramCode(fileName):    
+    (p, vars) = gen_program.Program()
+    writeInputFile(fileName, vars)
     code = p.printCode()
     f = open(fileName, "w")
     f.write(code)
+    f.close()
+
+def writeInputFile(fileName, vars):
+    f = open(fileName+".input", "w")
+    f.write("double,")
+    allTypes = []
+    for k in vars.keys():
+        allTypes.append(vars[k])
+    f.write(",".allTypes)
     f.close()
 
 def compileCode(compiler_name, compiler_path, op_level, dirName, fileName):
@@ -54,6 +64,8 @@ def compileTests():
                 compiler_path = c[1]
                 for op in OPT_LEVELS:
                     compileCode(compiler_name, compiler_path, op, p, fileName)
+
+def runTests():
 
 def main():
     global NUM_GROUPS, TESTS_PER_GROUP
