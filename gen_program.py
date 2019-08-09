@@ -36,6 +36,12 @@ class IdGenerator():
         for k in varNames.keys():
             ret.append(varNames[k] + " " + k)
         return ret
+    
+    def printAllTypes(self):
+        ret = []
+        for k in varNames.keys():
+            ret.append(varNames[k])
+        return ret
 
     def getVarsList(self):
         return varNames
@@ -334,7 +340,8 @@ class Program():
         c = c + "  compute(" + self.printFunctionParameters() + ");\n"
         c = c + "\n  return 0;\n"
         c = c + "}\n"
-        return (c, getVarsList())
+        allTypes = ",".join(self.idGen.printAllTypes())
+        return (c, allTypes)
         
 if __name__ == "__main__":
     p = Program()

@@ -9,20 +9,16 @@ OPT_LEVELS = ["-O0", "-O1"]
 TESTS_DIR = "_tests"
 
 def writeProgramCode(fileName):    
-    (p, vars) = gen_program.Program()
-    writeInputFile(fileName, vars)
-    code = p.printCode()
+    (code, allTypes) = gen_program.Program().printCode()
+    writeInputFile(fileName, allTypes)
     f = open(fileName, "w")
     f.write(code)
     f.close()
 
-def writeInputFile(fileName, vars):
+def writeInputFile(fileName, allTypes):
     f = open(fileName+".input", "w")
     f.write("double,")
-    allTypes = []
-    for k in vars.keys():
-        allTypes.append(vars[k])
-    f.write(",".allTypes)
+    f.write(allTypes+"\n")
     f.close()
 
 def compileCode(compiler_name, compiler_path, op_level, dirName, fileName):
@@ -64,8 +60,6 @@ def compileTests():
                 compiler_path = c[1]
                 for op in OPT_LEVELS:
                     compileCode(compiler_name, compiler_path, op, p, fileName)
-
-def runTests():
 
 def main():
     global NUM_GROUPS, TESTS_PER_GROUP
