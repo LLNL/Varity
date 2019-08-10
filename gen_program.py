@@ -4,7 +4,7 @@ import random
 import gen_inputs
 
 # Global sampling parameters
-MAX_EXPRESSION_SIZE = 5
+MAX_EXPRESSION_SIZE = 2
 MAX_NESTING_LEVELS = 6
 
 # This class generate variable names
@@ -227,7 +227,7 @@ class FunctionCall(Node):
         
         # Sample the blocks and levels of the function
         #levels = random.randrange(1, MAX_NESTING_LEVELS+1)
-        levels = 4
+        levels = 2
         #print("levels: {}".format(levels))
         lastBlock = None
         

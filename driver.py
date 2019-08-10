@@ -24,7 +24,7 @@ def writeInputFile(fileName, allTypes):
 def compileCode(compiler_name, compiler_path, op_level, dirName, fileName):
     try:
         os.chdir(dirName)
-        cmd = compiler_path + " -c " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
+        cmd = compiler_path + " " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
         out = subprocess.check_output(cmd, shell=True)                       
     except subprocess.CalledProcessError as outexc:                                                                                                   
         print ("Error at compile time:", outexc.returncode, outexc.output)
