@@ -1,19 +1,23 @@
 import os
 import sys
+import glob
 import subprocess
 import gen_inputs
 
-def getInputTypes(fileName, path):
-    f = fileName.split(".")[0]
-    inputFile = path+"/"+f+".c.input"
+INPUT_SAMPLES_PER_RUN = 3
+PROG_PER_TEST = {}
+
+def getInputTypes(fullProgName):
+    #f = fileName.split(".")[0]
+    inputFile = fullProgName+".input"
     fd = open(inputFile, 'r')
     types = fd.readlines()[0][:-1].split(",")
     print("file: {} types: {}".format(inputFile, types))
     fd.close()
     return types
 
-def generateInputs(fileName, path):
-    types = getInputTypes(fileName, path)
+def generateInputs(fullProgName):
+    types = getInputTypes(fullProgName)
     inGen = gen_inputs.InputGenerator()
     ret = ""
     for t in types:
@@ -24,23 +28,40 @@ def generateInputs(fileName, path):
             ret = ret + "5 "
     return ret
     
+# This finds all the tests (.exe) files for a given program
+# and stores them in a global dict
+def getAllTests(fullProgName):
+    global PROG_PER_TEST
+    # This is a list of all the tests
+    allTests = glob.glob(fullProgName+"*.exe")
+    PROG_PER_TEST[fullProgName] = allTests
+
+def runTests():
+    global PROG_PER_TEST
+    for k in PROG_PER_TEST.keys():
+        fullProgName = k
+        inputs = generateInputs(fullProgName)
+        for t in PROG_PER_TEST[k]:
+            try:
+                cmd = t + " " + inputs
+                print ("Running: " + cmd)
+                out = subprocess.check_output(cmd, shell=True)     
+                print("got: " + str(out))
+            except subprocess.CalledProcessError as outexc:                                                                                                   
+                print ("Error at runtime:", outexc.returncode, outexc.output)
+    
 def main():
+    global PROG_PER_TEST
+    
+    # Dir to walk
     rootDir = sys.argv[1]
+    
+    # Walk on the directory tree
     for dirName, subdirList, fileList in os.walk(rootDir):
-        #print('Found directory: %s' % dirName)
         for fname in fileList:
-            if "." in fname:
-                if fname.endswith('.exe'):
-                    fullPath = dirName+"/"+fname
-                    print(fullPath)
-                    inputs = generateInputs(fname, dirName)
-                    print("inputs: " + inputs)
-                    try:
-                        cmd = fullPath + " " + inputs
-                        print ("Running: " + cmd)
-                        out = subprocess.check_output(cmd, shell=True)     
-                        print("got: " + str(out))
-                    except subprocess.CalledProcessError as outexc:                                                                                                   
-                        print ("Error at runtime:", outexc.returncode, outexc.output)
+            if fname.endswith('.c'):
+                fullPath = dirName+"/"+fname
+                getAllTests(fullPath)
+    runTests()
 
 main()
