@@ -3,9 +3,10 @@ from enum import Enum
 import random
 import gen_inputs
 import subprocess
+import gen_inputs
 
 # Global sampling parameters
-MAX_EXPRESSION_SIZE = 5
+MAX_EXPRESSION_SIZE = 6
 MAX_NESTING_LEVELS = 4
 
 # Helper functions
@@ -100,8 +101,6 @@ class Expression(Node):
         while (size >= 1):
             op = BinaryOperation("")
             op.generate()
-            #op.left = idGen.generateDoubleID()
-            #op.right = idGen.generateDoubleID()
             op.left = None  
             op.right = None
             
@@ -119,20 +118,24 @@ class Expression(Node):
 
     def total(self, n):
         if n == None:
-            n = self.idGen.generateDoubleID()
+            if lucky():
+                n = gen_inputs.InputGenerator().genInput()
+            else:
+                n = self.idGen.generateDoubleID()
             return n
         elif isinstance(n, str):
             return n
-        #return "(" + Expression.total(self, n.left) + n.code + Expression.total(self, n.right) + ")"
         ret = Expression.total(self, n.left) + n.code + Expression.total(self, n.right)
         if lucky():
             return '(' + ret + ')'
         return ret
 
-    def printCode(self):
+    def printCode(self, assignment=True):
         t = Expression.total(self, self.rootNode)
-        #print("comp " + " {} {};".format(self.code, t))
-        return "comp " + self.code + " " + t + ";"
+        if assignment == True:
+            return "comp " + self.code + " " + t + ";"
+        else:
+            return t
 
     def getVariableDefinitions(self):
         ret = ""
@@ -150,6 +153,7 @@ class BooleanExpressionType(Enum):
 
 class BooleanExpression(Node):
     def __init__(self, idGen, code="==", left=None, right=None):
+        self.idGen = idGen
         op = random.choice(list(BooleanExpressionType))
         if op == BooleanExpressionType.eq:
             self.code = " == "
@@ -162,12 +166,13 @@ class BooleanExpression(Node):
         elif op == BooleanExpressionType.leq:
             self.code = " <= "
 
-        fpVal = gen_inputs.InputGenerator()
         self.left = "comp"
-        self.right = fpVal.genInput()
+        #fpVal = gen_inputs.InputGenerator()
+        #self.right = fpVal.genInput()
+        self.right = Expression(idGen)
 
     def printCode(self):
-        return self.left + self.code + self.right
+        return self.left + self.code + self.right.printCode(False)
 
 class FoorLoopCondition(Node):
     def __init__(self, idGen, code="", left=None, right=None):
@@ -286,7 +291,9 @@ class FunctionCall(Node):
         if self.device == True:
             h = h + "__global__ "
         h = h + "void compute("
-        h = h + "double comp, "
+        h = h + "double comp"
+        if len(self.idGen.printAllVars()) > 0:
+            h = h + ", "
         h = h + ",".join(self.idGen.printAllVars())
         h = h + ") {\n"
         return h
