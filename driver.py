@@ -25,7 +25,7 @@ def compileCode(compiler_name, compiler_path, op_level, dirName, fileName):
     try:
         os.chdir(dirName)
         cmd = compiler_path + " " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
-        out = subprocess.check_output(cmd, shell=True)                       
+        out = subprocess.check_output(cmd, shell=True)                    
     except subprocess.CalledProcessError as outexc:                                                                                                   
         print ("Error at compile time:", outexc.returncode, outexc.output)
 
@@ -50,8 +50,8 @@ def generateTests():
 def compileTests():
     global NUM_GROUPS, TESTS_PER_GROUP, COMPILERS, TESTS_DIR
     
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     for g in range(NUM_GROUPS):
-        THIS_DIR = os.path.dirname(os.path.abspath(__file__))
         p = THIS_DIR + "/" + TESTS_DIR + "/_group_" + str(g+1)
         for t in range(TESTS_PER_GROUP): 
             fileName = "_test_" + str(t+1) + ".c"

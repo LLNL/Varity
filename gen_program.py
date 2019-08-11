@@ -2,10 +2,16 @@
 from enum import Enum
 import random
 import gen_inputs
+import subprocess
 
 # Global sampling parameters
 MAX_EXPRESSION_SIZE = 5
 MAX_NESTING_LEVELS = 4
+
+# Helper functions
+# This function return True or False randomly
+def lucky():
+    return random.randrange(0, 2) == 0
 
 # This class generate variable names
 varNames = {}
@@ -117,7 +123,11 @@ class Expression(Node):
             return n
         elif isinstance(n, str):
             return n
-        return "(" + Expression.total(self, n.left) + n.code + Expression.total(self, n.right) + ")"
+        #return "(" + Expression.total(self, n.left) + n.code + Expression.total(self, n.right) + ")"
+        ret = Expression.total(self, n.left) + n.code + Expression.total(self, n.right)
+        if lucky():
+            return '(' + ret + ')'
+        return ret
 
     def printCode(self):
         t = Expression.total(self, self.rootNode)
@@ -343,8 +353,48 @@ class Program():
         allTypes = ",".join(self.idGen.printAllTypes())
         return (c, allTypes)
         
+def compileProgram(code):
+    fileName = 'tmp.c'
+    fd =open(fileName, 'w')
+    fd.write(code)
+    fd.close()
+    
+    print("Compiling: " + fileName)
+    try:
+        cmd = "clang -o " + fileName + ".exe " + fileName
+        out = subprocess.check_output(cmd, shell=True)                    
+    except subprocess.CalledProcessError as outexc:                                                                                                   
+        print ("Error at compile time:", outexc.returncode, outexc.output)
+
+def runProgram(input):
+    print("Running...")
+    try:
+        cmd = "./tmp.c.exe " + input
+        out = subprocess.check_output(cmd, shell=True) 
+        res = out.decode('ascii')[:-1]
+        print(res)
+    except subprocess.CalledProcessError as outexc:                                                                                                   
+        print ("Error at runtime:", outexc.returncode, outexc.output)
+
+def getInput(allTypes):
+    inGen = gen_inputs.InputGenerator()
+    input = inGen.genInput() + " "
+    for type in allTypes.split(","):
+        if type == "double":
+            input = input + inGen.genInput() + " "
+        elif type == "int":
+            input = input + "5 "
+    return input
+
 if __name__ == "__main__":
     p = Program()
-    print(p.printCode()[0])
+    (c, allTypes) = p.printCode()
+    print(c)
+    
+    # Compile and run program
+    compileProgram(c)
+    input = getInput(allTypes)
+    print("Input: " + input)
+    runProgram(input)
     
 

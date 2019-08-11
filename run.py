@@ -4,7 +4,7 @@ import glob
 import subprocess
 import gen_inputs
 
-INPUT_SAMPLES_PER_RUN = 3
+INPUT_SAMPLES_PER_RUN = 20
 PROG_PER_TEST = {}
 
 # "test.c" ->   [

@@ -1,4 +1,5 @@
 
 __pycache__
 _tests*
-
+*.exe
+*.c
