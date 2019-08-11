@@ -4,8 +4,8 @@ import random
 import gen_inputs
 
 # Global sampling parameters
-MAX_EXPRESSION_SIZE = 2
-MAX_NESTING_LEVELS = 6
+MAX_EXPRESSION_SIZE = 5
+MAX_NESTING_LEVELS = 4
 
 # This class generate variable names
 varNames = {}
@@ -345,6 +345,6 @@ class Program():
         
 if __name__ == "__main__":
     p = Program()
-    print(p.printCode())
+    print(p.printCode()[0])
     
 

@@ -2,8 +2,8 @@ import gen_program
 import os
 import subprocess
 
-NUM_GROUPS = 1
-TESTS_PER_GROUP = 2
+NUM_GROUPS = 5
+TESTS_PER_GROUP = 20
 COMPILERS = [("clang_70", "/Users/lagunaperalt1/projects/GPU_work/latest_llvm/llvm-7.0/install/bin/clang"), ("gcc_7", "/opt/local/bin/gcc-mp-7")]
 OPT_LEVELS = ["-O0", "-O1", "-O2", "-O3"]
 TESTS_DIR = "_tests"
