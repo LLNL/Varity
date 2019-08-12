@@ -2,16 +2,24 @@ import gen_program
 import os
 import subprocess
 
-NUM_GROUPS = 5
-TESTS_PER_GROUP = 20
-COMPILERS = [("clang_70", "/Users/lagunaperalt1/projects/GPU_work/latest_llvm/llvm-7.0/install/bin/clang"), ("gcc_7", "/opt/local/bin/gcc-mp-7")]
+NUM_GROUPS = 2
+TESTS_PER_GROUP = 10
+COMPILERS = [("clang_80", "/usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang"), ("gcc_493", "/usr/tce/packages/gcc/gcc-4.9.3/bin/gcc"), ("xlc", "/usr/tce/packages/xl/xl-2019.02.07/bin/xlc"), ("nvcc_92", "/usr/tce/packages/cuda/cuda-9.2.148/bin/nvcc")]
 OPT_LEVELS = ["-O0", "-O1", "-O2", "-O3"]
 TESTS_DIR = "_tests"
 
-def writeProgramCode(fileName):    
-    (code, allTypes) = gen_program.Program().printCode()
+def writeProgramCode(fileName):
+    # Write C code
+    p = gen_program.Program()
+    (code, allTypes) = p.printCode()
     writeInputFile(fileName, allTypes)
     f = open(fileName, "w")
+    f.write(code)
+    f.close()
+
+    # Write CUDA code
+    (code, allTypes) = p.printCode(True)
+    f = open(fileName+"u", "w")
     f.write(code)
     f.close()
 
@@ -21,13 +29,22 @@ def writeInputFile(fileName, allTypes):
     f.write(allTypes+"\n")
     f.close()
 
+def isCUDACompiler(compiler_name):
+    return "nvcc" in compiler_name
+
 def compileCode(compiler_name, compiler_path, op_level, dirName, fileName):
     try:
         os.chdir(dirName)
-        cmd = compiler_path + " " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
+
+        if isCUDACompiler(compiler_name):
+            cmd = compiler_path + " -arch=sm_60 " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName+"u"
+        else:
+            cmd = compiler_path + " -std=c99 " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
+
         out = subprocess.check_output(cmd, shell=True)                    
     except subprocess.CalledProcessError as outexc:                                                                                                   
-        print ("Error at compile time:", outexc.returncode, outexc.output)
+        print("Error at compile time:", outexc.returncode, outexc.output)
+        print("FAILED: ", cmd)
 
 def generateTests():
     global NUM_GROUPS, TESTS_PER_GROUP, COMPILERS, TESTS_DIR

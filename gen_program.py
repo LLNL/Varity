@@ -233,13 +233,14 @@ class CodeBlock(Enum):
 class FunctionCall(Node):
     global MAX_NESTING_LEVELS
     
-    def __init__(self, idGen, device=False, code=None, left=None, right=None):
-        self.device = device
+    def __init__(self, idGen, code=None, left=None, right=None):
+        #self.device = device
         self.code = None
         self.left = None
         self.right = "}\n"
         self.idGen = idGen
-        
+        self.codeCache = None # If the code was printed will be saved here    
+    
         # Sample the blocks and levels of the function
         #levels = random.randrange(1, MAX_NESTING_LEVELS+1)
         levels = 2
@@ -288,8 +289,8 @@ class FunctionCall(Node):
                               
     def printHeader(self):
         h = ""
-        if self.device == True:
-            h = h + "__global__ "
+        #if self.device == True:
+        #    h = h + "__global__ "
         h = h + "void compute("
         h = h + "double comp"
         if len(self.idGen.printAllVars()) > 0:
@@ -302,16 +303,21 @@ class FunctionCall(Node):
         return '\n   printf("%.17g\\n", comp);\n'
         
     def printCode(self):
+        if self.codeCache != None:
+            return self.codeCache
+
         c = self.left.printCode()
-        c = "\n\n" + self.printHeader() + c
+        c = self.printHeader() + c
         c = c + self.writePrintStatement()
         c = c + "\n}"
+        self.codeCache = c
         return c
 
 class Program():
-    def __init__(self, device=False):
+    def __init__(self):
         self.idGen = IdGenerator()
-        self.func = FunctionCall(self.idGen, device)
+        self.func = FunctionCall(self.idGen)
+        #self.device = device
         #print (f.printCode())
         
     def printInputVariables(self):
@@ -344,64 +350,89 @@ class Program():
     def printHeader(self):
         h = "\n/* This is a automatically generated test. Do not modify */\n\n"
         h = h + "#include <stdio.h>\n"
-        h = h + "#include <stdlib.h>\n"
+        h = h + "#include <stdlib.h>\n\n"
+        if self.device == True:
+            h = h + "__global__\n"
         h = h + self.func.printCode()
         h = h + "\n\nint main(int argc, char** argv) {\n"
         h = h + "/* Program variables */\n\n"
         h = h + self.printInputVariables()
         return h
 
-    def printCode(self):
+    def printCode(self, device=False):
+        self.device = device
         c = self.printHeader()
         # call the function
-        c = c + "  compute(" + self.printFunctionParameters() + ");\n"
+        if self.device == False:
+            c = c + "  compute(" + self.printFunctionParameters() + ");\n"
+        else: # here we call a device kernel
+            c = c + "  compute<<<1,1>>>(" + self.printFunctionParameters() + ");\n"
+            c = c + "  cudaDeviceSynchronize();\n"
+
+        # finalize main function
         c = c + "\n  return 0;\n"
         c = c + "}\n"
         allTypes = ",".join(self.idGen.printAllTypes())
         return (c, allTypes)
         
-def compileProgram(code):
-    fileName = 'tmp.c'
-    fd =open(fileName, 'w')
-    fd.write(code)
-    fd.close()
+    def compileProgram(self, device=False):
+        (code, allTypes) = self.printCode(device)
+        if self.device == False:
+            fileName = 'tmp.c'
+        else:
+            fileName = 'tmp.cu'
+
+        fd =open(fileName, 'w')
+        fd.write(code)
+        fd.close()
     
-    print("Compiling: " + fileName)
-    try:
-        cmd = "clang -o " + fileName + ".exe " + fileName
-        out = subprocess.check_output(cmd, shell=True)                    
-    except subprocess.CalledProcessError as outexc:                                                                                                   
-        print ("Error at compile time:", outexc.returncode, outexc.output)
+        print("Compiling: " + fileName)
+        try:
+            if self.device == False:
+                cmd = "clang -std=c99 -o " + fileName + ".exe " + fileName
+            else: # compile for device case
+                cmd = "nvcc -o " + fileName + ".exe " + fileName
 
-def runProgram(input):
-    print("Running...")
-    try:
-        cmd = "./tmp.c.exe " + input
-        out = subprocess.check_output(cmd, shell=True) 
-        res = out.decode('ascii')[:-1]
-        print(res)
-    except subprocess.CalledProcessError as outexc:                                                                                                   
-        print ("Error at runtime:", outexc.returncode, outexc.output)
+            print(cmd)
+            out = subprocess.check_output(cmd, shell=True)                    
+        except subprocess.CalledProcessError as outexc:                                                                                                   
+            print ("Error at compile time:", outexc.returncode, outexc.output)
 
-def getInput(allTypes):
-    inGen = gen_inputs.InputGenerator()
-    input = inGen.genInput() + " "
-    for type in allTypes.split(","):
-        if type == "double":
-            input = input + inGen.genInput() + " "
-        elif type == "int":
-            input = input + "5 "
-    return input
+    def runProgram(self):
+        print("Running...")
+        input = self.getInput()
+        try:
+            if self.device == False:
+                cmd = "./tmp.c.exe " + input
+            else:
+                cmd = "./tmp.cu.exe " + input
+
+            out = subprocess.check_output(cmd, shell=True) 
+            res = out.decode('ascii')[:-1]
+            print(cmd)
+            print(res)
+        except subprocess.CalledProcessError as outexc:                                                                                                   
+            print ("Error at runtime:", outexc.returncode, outexc.output)
+
+    def getInput(self):
+        allTypes = ",".join(self.idGen.printAllTypes())
+        inGen = gen_inputs.InputGenerator()
+        input = inGen.genInput() + " "
+        for type in allTypes.split(","):
+            if type == "double":
+                input = input + inGen.genInput() + " "
+            elif type == "int":
+                input = input + "5 "
+        return input
 
 if __name__ == "__main__":
     p = Program()
-    (c, allTypes) = p.printCode()
-    print(c)
+    #(c, allTypes) = p.printCode(True)
+    print(p.printCode()[0])
+    print(p.printCode(True)[0])
     
     # Compile and run program
-    compileProgram(c)
-    input = getInput(allTypes)
-    print("Input: " + input)
-    runProgram(input)
+    p.compileProgram(True)
+    #p.runProgram()
     
 
