@@ -1,9 +1,10 @@
 import gen_program
 import os
 import subprocess
+import sys
 
 NUM_GROUPS = 2
-TESTS_PER_GROUP = 10
+TESTS_PER_GROUP = 3
 COMPILERS = [("clang_80", "/usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang"), ("gcc_493", "/usr/tce/packages/gcc/gcc-4.9.3/bin/gcc"), ("xlc", "/usr/tce/packages/xl/xl-2019.02.07/bin/xlc"), ("nvcc_92", "/usr/tce/packages/cuda/cuda-9.2.148/bin/nvcc")]
 OPT_LEVELS = ["-O0", "-O1", "-O2", "-O3"]
 TESTS_DIR = "_tests"
@@ -67,16 +68,25 @@ def generateTests():
 def compileTests():
     global NUM_GROUPS, TESTS_PER_GROUP, COMPILERS, TESTS_DIR
     
+    print("Total tests to compile: ", NUM_GROUPS*TESTS_PER_GROUP)
+    count = 1
+
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     for g in range(NUM_GROUPS):
         p = THIS_DIR + "/" + TESTS_DIR + "/_group_" + str(g+1)
-        for t in range(TESTS_PER_GROUP): 
+        for t in range(TESTS_PER_GROUP):
+            # --- print progress ---
+            print("\r--> Compiling test: {}".format(count), end='')
+            sys.stdout.flush()
+            count = count + 1
+            # ---------------------- 
             fileName = "_test_" + str(t+1) + ".c"
             for c in COMPILERS:
                 compiler_name = c[0]
                 compiler_path = c[1]
                 for op in OPT_LEVELS:
                     compileCode(compiler_name, compiler_path, op, p, fileName)
+    print("")
 
 def main():
     global NUM_GROUPS, TESTS_PER_GROUP

@@ -4,7 +4,7 @@ import glob
 import subprocess
 import gen_inputs
 
-INPUT_SAMPLES_PER_RUN = 20
+INPUT_SAMPLES_PER_RUN = 2
 PROG_PER_TEST = {}
 
 # "test.c" ->   [
@@ -48,7 +48,15 @@ def getAllTests(fullProgName):
 
 def runTests():
     global PROG_PER_TEST
+    print("Total programs: ", len(PROG_PER_TEST.keys()))
+    count = 1
     for k in PROG_PER_TEST.keys():
+        # --- print progress ---
+        print("\r--> On program: {}".format(count), end='')
+        sys.stdout.flush()
+        count = count + 1
+        # ----------------------
+
         fullProgName = k
         results = []
         for n in range(INPUT_SAMPLES_PER_RUN):
@@ -65,6 +73,7 @@ def runTests():
                     print ("Error at runtime:", outexc.returncode, outexc.output)
 
         PROG_RESULTS[k] = results
+    print("")
 
 def saveResults():
     global PROG_RESULTS
@@ -133,6 +142,7 @@ def main():
                 fullPath = dirName+"/"+fname
                 getAllTests(fullPath)
     runTests()
+    print("Saving runs results")
     saveResults()
 
 main()
