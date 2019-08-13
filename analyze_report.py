@@ -3,17 +3,40 @@ import sys
 
 def main():
     fileName = sys.argv[1]
+    
+    per_compiler_table = {}
     with open(fileName) as json_file:
         data = json.load(json_file)
         for k in data.keys():
             for input in data[k].keys():
-                r = []
                 for comp in data[k][input].keys():
                     for op in data[k][input][comp].keys():
-                        r.append(data[k][input][comp][op])
-                #print(r)
-                if len(set(r)) == 1:
-                    print("---> Same!")
-                else:
-                    print("XXXXXXXXXXXXXXXXXXXXXXXXX")
+                        result = data[k][input][comp][op]
+                        d = k+"-"+input+"-"+op
+                        if comp in per_compiler_table.keys():
+                            per_compiler_table[comp][d] = result
+                        else:
+                            per_compiler_table[comp] = {d: result}
+
+
+    allCompilers = list(per_compiler_table.keys())
+    combinations  = set([])
+    for i in range(len(allCompilers)):
+        c1 = allCompilers[i]
+        for j in range(i+1, len(allCompilers)):
+            c2 = allCompilers[j]
+            if c1 != c2:
+                diff = 0
+                allVals1 = per_compiler_table[c1]
+                allVals2 = per_compiler_table[c2]
+                for i in allVals1.keys():
+                    if allVals1[i] != allVals2[i]:
+                        diff = diff + 1
+                        #print(c1, c2, i)
+                        if "O3" in i.split("-")[-1:]:
+                            print("\t-->", c1, c2, allVals1[i], allVals2[i])
+
+                print("Diff:", c1, c2, diff)
+                
+
 main()

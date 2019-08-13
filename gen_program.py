@@ -429,10 +429,9 @@ if __name__ == "__main__":
     p = Program()
     #(c, allTypes) = p.printCode(True)
     print(p.printCode()[0])
-    print(p.printCode(True)[0])
-    
+    #print(p.printCode(True)[0])
     # Compile and run program
-    p.compileProgram(True)
+    #p.compileProgram(True)
     #p.runProgram()
     
 
