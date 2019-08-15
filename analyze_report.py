@@ -29,12 +29,13 @@ def main():
                 diff = 0
                 allVals1 = per_compiler_table[c1]
                 allVals2 = per_compiler_table[c2]
-                for i in allVals1.keys():
-                    if allVals1[i] != allVals2[i]:
+                for k in allVals1.keys():
+                    if allVals1[k] != allVals2[k]:
                         diff = diff + 1
                         #print(c1, c2, i)
-                        if "O3" in i.split("-")[-1:]:
-                            print("\t-->", c1, c2, allVals1[i], allVals2[i])
+                        if "O3" in k.split("-")[-1:]:
+                            print("\t-->", c1, c2, allVals1[k], allVals2[k])
+                            print(k)
 
                 print("Diff:", c1, c2, diff)
                 

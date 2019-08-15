@@ -2,7 +2,7 @@
 #BSUB -nnodes 1
 #BSUB -q pbatch
 #BSUB -G guests
-#BSUB -W 60
+#BSUB -W 180
 
 date
 
