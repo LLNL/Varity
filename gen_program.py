@@ -8,6 +8,7 @@ import gen_inputs
 # Global sampling parameters
 MAX_EXPRESSION_SIZE = 6
 MAX_NESTING_LEVELS = 4
+MAX_LINES_IN_BLOCK = 3
 
 # Helper functions
 # This function return True or False randomly
@@ -33,6 +34,8 @@ class IdGenerator():
             IdGenerator.__instance = self
             self.varNames = {}
             self.lastId = 0
+            self.tempVarNames = {}
+            self.tempLastId = 0
     # ---- singleton accesor ------
     
     def genID(self):
@@ -44,6 +47,13 @@ class IdGenerator():
     def generateDoubleID(self):
         name = self.genID()
         self.varNames[name] = "double"
+        return name
+    
+    # generates temporal double variable
+    def generateTempDoubleID(self):
+        self.tempLastId = self.tempLastId + 1
+        name = "tmp_" + str(self.tempLastId)
+        self.tempVarNames[name] = "double"
         return name
 
     # generate int variable
@@ -93,6 +103,11 @@ class BinaryOperationType(Enum):
     div = 3
     
 class BinaryOperation(Node):
+    def __init__(self, code="", left=None, right=None):
+        self.code = code
+        self.left  = left
+        self.right = right
+    
     def generate(self):
         op = random.choice(list(BinaryOperationType))
         if op == BinaryOperationType.add:
@@ -104,20 +119,24 @@ class BinaryOperation(Node):
         elif op == BinaryOperationType.div:
             self.code = " / "
 
+    def printCode(self):
+        return self.code
+
 class Expression(Node):
     global MAX_EXPRESSION_SIZE
     rootNode = None
     variables = set([])
-    def __init__(self, code="=", left=None, right=None):
+    def __init__(self, code="=", left=None, right=None, varToBeUsed=None):
         self.code = code
         self.left  = left
         self.right = right
-        #self.idGen = idGen
+        self.varToBeUsed = varToBeUsed
+
         size = random.randrange(1, MAX_EXPRESSION_SIZE)
 
         lastOp = None
         while (size >= 1):
-            op = BinaryOperation("")
+            op = BinaryOperation()
             op.generate()
             op.left = None  
             op.right = None
@@ -150,6 +169,12 @@ class Expression(Node):
 
     def printCode(self, assignment=True):
         t = Expression.total(self, self.rootNode)
+        if self.varToBeUsed != None:
+            for v in self.varToBeUsed:
+                op = BinaryOperation()
+                op.generate()
+                t = v + op.printCode() + t
+        
         if assignment == True:
             return "comp " + self.code + " " + t + ";"
         else:
@@ -160,6 +185,72 @@ class Expression(Node):
         for v in self.variables:
             ret = ret + "double " + v + ";\n"
         return ret
+
+class VariableDefinition(Node):
+    def __init__(self, code=" = ", left=None, right=None):
+        self.code = code
+        self.left  = "double " + IdGenerator.getInstance().generateTempDoubleID()
+        self.right = right
+
+        if lucky(): # constant definition
+            self.right = gen_inputs.InputGenerator().genInput()
+        else:
+            self.right = Expression()
+
+    def getVarName(self):
+        return self.left.split(" ")[1]
+   
+    def printCode(self):
+        if isinstance(self.right, str):
+            c = self.right
+        else:
+            c = self.right.printCode(False)
+        return self.left + self.code + c + ";"
+
+class OperationsBlock(Node):
+    def __init__(self, code="", left=None, right=None):
+        self.code = code
+        self.left  = left
+        self.right = right
+        
+        # Define the number of lines that the block will have
+        lines = random.randrange(1, MAX_LINES_IN_BLOCK+1)
+        assert lines > 0
+
+        # In the block we either have definitions of new variables or 
+        # assigments to comp.
+        # The last line of the block will always be 
+        # an assigment from an expression.
+        if lines == 1:
+            self.left = [Expression()]
+        else:
+            i = 1
+            varsToBeUsed = []
+            l = []
+            while(i <= lines):
+                    
+                if lucky() or i==lines: # expression with assigment
+                    c = None
+                    if len(varsToBeUsed) > 0:
+                        c = Expression("=", None, None, varsToBeUsed[:])
+                        varsToBeUsed.clear()
+                    else:
+                        c = Expression()
+                    l.append(c)
+                    if i==lines:
+                        break
+                else: 
+                    v = VariableDefinition()
+                    l.append(v)
+                    varsToBeUsed.append(v.getVarName())
+                i = i+1
+            self.left = l
+
+    def printCode(self):
+        ret = []
+        for l in self.left:
+            ret.append( l.printCode() )
+        return "\n".join(ret)
 
 # Types of binary operations
 class BooleanExpressionType(Enum):
@@ -199,7 +290,6 @@ class FoorLoopCondition(Node):
     def printCode(self):
         return self.code
     
-
 class IfConditionBlock(Node):
     def __init__(self, level=1, code=None, left=None, right=None):
         self.level = level
@@ -210,11 +300,14 @@ class IfConditionBlock(Node):
         self.code = BooleanExpression()
         
         # Generate code inside the block
-        self.left = Expression()
+        #self.left = OperationsBlock()
+        self.left = left
         self.right = "break;"
 
     def printCode(self):
         t = "if (" + self.code.printCode() + ") {\n"
+        if self.left == None:
+            self.left = OperationsBlock()
         t = t + self.identation + self.left.printCode() + "\n"
         t = t + "}"
         return t
@@ -230,11 +323,14 @@ class ForLoopBlock(Node):
 
         # Generate code of the loop condition
         self.code = FoorLoopCondition()
-        self.left = Expression()
+        #self.left = OperationsBlock()
+        self.left = left
         self.right = None
 
     def printCode(self):
         t = "for (" + self.code.printCode() + ") {\n"
+        if self.left == None:
+            self.left = OperationsBlock()
         t = t + self.identation + self.left.printCode() + "\n"
         t = t + "}"
         return t
@@ -275,7 +371,7 @@ class FunctionCall(Node):
         for i in range(len(blocks)):
             b = blocks[i]
             if b == CodeBlock.expression:
-                c = Expression()
+                c = OperationsBlock()
                 if lastBlock != None:
                     lastBlock.setContent(c)
                 
@@ -453,6 +549,9 @@ if __name__ == "__main__":
     # Compile and run program
     #p.compileProgram(True)
     #p.runProgram()
+
+    #o = OperationsBlock()
+    #print(o.printCode())
 
     
 
