@@ -14,11 +14,26 @@ MAX_NESTING_LEVELS = 4
 def lucky():
     return random.randrange(0, 2) == 0
 
-# This class generate variable names
-varNames = {}
 class IdGenerator():
-    lastId = 0
-    global varNames
+    __instance = None
+    
+    # ---- singleton accesor ------
+    @staticmethod 
+    def getInstance():
+        """ Static access method. """
+        if IdGenerator.__instance == None:
+            IdGenerator()
+        return IdGenerator.__instance
+            
+    def __init__(self):
+        """ Virtually private constructor. """
+        if IdGenerator.__instance != None:
+            raise Exception("This class is a singleton!")
+        else:
+            IdGenerator.__instance = self
+            self.varNames = {}
+            self.lastId = 0
+    # ---- singleton accesor ------
     
     def genID(self):
         self.lastId = self.lastId + 1
@@ -28,30 +43,34 @@ class IdGenerator():
     # generates double variable
     def generateDoubleID(self):
         name = self.genID()
-        varNames[name] = "double"
+        self.varNames[name] = "double"
         return name
 
     # generate int variable
     def generateIntID(self):
         name = self.genID()
-        varNames[name] = "int"
+        self.varNames[name] = "int"
         return name
 
     # returns a list    
     def printAllVars(self):
         ret = []
-        for k in varNames.keys():
-            ret.append(varNames[k] + " " + k)
+        for k in self.varNames.keys():
+            ret.append(self.varNames[k] + " " + k)
         return ret
     
     def printAllTypes(self):
         ret = []
-        for k in varNames.keys():
-            ret.append(varNames[k])
+        for k in self.varNames.keys():
+            ret.append(self.varNames[k])
         return ret
 
     def getVarsList(self):
-        return varNames
+        return self.varNames
+    
+    def clear(self):
+        self.varNames.clear()
+        self.lastId = 0
 
 # Basic node in a tree
 class Node:
@@ -74,7 +93,6 @@ class BinaryOperationType(Enum):
     div = 3
     
 class BinaryOperation(Node):
-    
     def generate(self):
         op = random.choice(list(BinaryOperationType))
         if op == BinaryOperationType.add:
@@ -90,11 +108,11 @@ class Expression(Node):
     global MAX_EXPRESSION_SIZE
     rootNode = None
     variables = set([])
-    def __init__(self, idGen, code="=", left=None, right=None):
+    def __init__(self, code="=", left=None, right=None):
         self.code = code
         self.left  = left
         self.right = right
-        self.idGen = idGen
+        #self.idGen = idGen
         size = random.randrange(1, MAX_EXPRESSION_SIZE)
 
         lastOp = None
@@ -121,7 +139,7 @@ class Expression(Node):
             if lucky():
                 n = gen_inputs.InputGenerator().genInput()
             else:
-                n = self.idGen.generateDoubleID()
+                n = IdGenerator.getInstance().generateDoubleID()
             return n
         elif isinstance(n, str):
             return n
@@ -152,8 +170,8 @@ class BooleanExpressionType(Enum):
     leq = 4 # less or equal than
 
 class BooleanExpression(Node):
-    def __init__(self, idGen, code="==", left=None, right=None):
-        self.idGen = idGen
+    def __init__(self, code="==", left=None, right=None):
+        #self.idGen = idGen
         op = random.choice(list(BooleanExpressionType))
         if op == BooleanExpressionType.eq:
             self.code = " == "
@@ -169,30 +187,30 @@ class BooleanExpression(Node):
         self.left = "comp"
         #fpVal = gen_inputs.InputGenerator()
         #self.right = fpVal.genInput()
-        self.right = Expression(idGen)
+        self.right = Expression()
 
     def printCode(self):
         return self.left + self.code + self.right.printCode(False)
 
 class FoorLoopCondition(Node):
-    def __init__(self, idGen, code="", left=None, right=None):
-        self.code = "int i=0; i < " + idGen.generateIntID() + "; ++i"
+    def __init__(self, code="", left=None, right=None):
+        self.code = "int i=0; i < " + IdGenerator.getInstance().generateIntID() + "; ++i"
     
     def printCode(self):
         return self.code
     
 
 class IfConditionBlock(Node):
-    def __init__(self, idGen, level=1, code=None, left=None, right=None):
+    def __init__(self, level=1, code=None, left=None, right=None):
         self.level = level
         self.identation = ''
         self.identation += '  ' * self.level
         
         # Generate code of the boolean expresion (default)
-        self.code = BooleanExpression(idGen)
+        self.code = BooleanExpression()
         
         # Generate code inside the block
-        self.left = Expression(idGen)
+        self.left = Expression()
         self.right = "break;"
 
     def printCode(self):
@@ -205,14 +223,14 @@ class IfConditionBlock(Node):
         self.left = c
 
 class ForLoopBlock(Node):
-    def __init__(self, idGen, level=1, code=None, left=None, right=None):
+    def __init__(self, level=1, code=None, left=None, right=None):
         self.level = level
         self.identation = ''
         self.identation += '  ' * self.level
 
         # Generate code of the loop condition
-        self.code = FoorLoopCondition(idGen)
-        self.left = Expression(idGen)
+        self.code = FoorLoopCondition()
+        self.left = Expression()
         self.right = None
 
     def printCode(self):
@@ -233,17 +251,17 @@ class CodeBlock(Enum):
 class FunctionCall(Node):
     global MAX_NESTING_LEVELS
     
-    def __init__(self, idGen, code=None, left=None, right=None):
+    def __init__(self, code=None, left=None, right=None):
         #self.device = device
         self.code = None
         self.left = None
         self.right = "}\n"
-        self.idGen = idGen
+        #self.idGen = idGen
         self.codeCache = None # If the code was printed will be saved here    
     
         # Sample the blocks and levels of the function
-        #levels = random.randrange(1, MAX_NESTING_LEVELS+1)
-        levels = 2
+        levels = random.randrange(1, MAX_NESTING_LEVELS+1)
+        #levels = 2
         #print("levels: {}".format(levels))
         lastBlock = None
         
@@ -257,7 +275,7 @@ class FunctionCall(Node):
         for i in range(len(blocks)):
             b = blocks[i]
             if b == CodeBlock.expression:
-                c = Expression(idGen)
+                c = Expression()
                 if lastBlock != None:
                     lastBlock.setContent(c)
                 
@@ -268,7 +286,7 @@ class FunctionCall(Node):
                 break
                               
             elif b == CodeBlock.if_codition:
-                c = IfConditionBlock(idGen, i+1)
+                c = IfConditionBlock(i+1)
                 if lastBlock != None:
                     lastBlock.setContent(c)
                 lastBlock = c
@@ -278,7 +296,7 @@ class FunctionCall(Node):
                     self.left = c
                               
             elif b == CodeBlock.for_loop:
-                c = ForLoopBlock(idGen, i+1)
+                c = ForLoopBlock(i+1)
                 if lastBlock != None:
                     lastBlock.setContent(c)
                 lastBlock = c
@@ -293,9 +311,9 @@ class FunctionCall(Node):
         #    h = h + "__global__ "
         h = h + "void compute("
         h = h + "double comp"
-        if len(self.idGen.printAllVars()) > 0:
+        if len(IdGenerator.getInstance().printAllVars()) > 0:
             h = h + ", "
-        h = h + ",".join(self.idGen.printAllVars())
+        h = h + ",".join(IdGenerator.getInstance().printAllVars())
         h = h + ") {\n"
         return h
 
@@ -315,14 +333,15 @@ class FunctionCall(Node):
 
 class Program():
     def __init__(self):
-        self.idGen = IdGenerator()
-        self.func = FunctionCall(self.idGen)
+        IdGenerator.getInstance().clear()
+        #self.idGen = IdGenerator()
+        self.func = FunctionCall()
         #self.device = device
         #print (f.printCode())
         
     def printInputVariables(self):
         ret = ""
-        vars = self.idGen.getVarsList()
+        vars = IdGenerator.getInstance().getVarsList()
         
         ret = ret + "  double " + "tmp_1 = atof(argv[1]);\n"
         idNum = 2
@@ -342,7 +361,7 @@ class Program():
     
     def printFunctionParameters(self):
         vars = []
-        for k in range(len(self.idGen.getVarsList()) + 1):
+        for k in range(len(IdGenerator.getInstance().getVarsList()) + 1):
             vars.append("tmp_" + str(k+1))
         return ",".join(vars)
         
@@ -372,7 +391,7 @@ class Program():
         # finalize main function
         c = c + "\n  return 0;\n"
         c = c + "}\n"
-        allTypes = ",".join(self.idGen.printAllTypes())
+        allTypes = ",".join(IdGenerator.getInstance().printAllTypes())
         return (c, allTypes)
         
     def compileProgram(self, device=False):
@@ -415,7 +434,7 @@ class Program():
             print ("Error at runtime:", outexc.returncode, outexc.output)
 
     def getInput(self):
-        allTypes = ",".join(self.idGen.printAllTypes())
+        allTypes = ",".join(IdGenerator.getInstance().printAllTypes())
         inGen = gen_inputs.InputGenerator()
         input = inGen.genInput() + " "
         for type in allTypes.split(","):
@@ -426,12 +445,14 @@ class Program():
         return input
 
 if __name__ == "__main__":
-    p = Program()
-    #(c, allTypes) = p.printCode(True)
-    print(p.printCode()[0])
+    for i in range(3):
+        p = Program()
+        #(c, allTypes) = p.printCode(True)
+        print(p.printCode()[0])
     #print(p.printCode(True)[0])
     # Compile and run program
     #p.compileProgram(True)
     #p.runProgram()
+
     
 
