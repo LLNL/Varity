@@ -4,7 +4,7 @@ import glob
 import subprocess
 import gen_inputs
 
-INPUT_SAMPLES_PER_RUN = 5
+INPUT_SAMPLES_PER_RUN = 2
 PROG_PER_TEST = {}
 
 # "test.c" ->   [
@@ -79,11 +79,13 @@ def runTests():
 
 def saveResults():
     global PROG_RESULTS
-    print("{")
+    
+    f = open("results.json", "w")
+    print("{", file=f)
     for k in PROG_RESULTS.keys():
         lastTest = list(PROG_RESULTS.keys())[-1]
         # ----
-        print('  "'+k+'": {')
+        print('  "'+k+'": {', file=f)
         # First we save the content in a dictionary
         key_input = {}
         for r in PROG_RESULTS[k]:
@@ -91,8 +93,6 @@ def saveResults():
             opt = r.split()[0].split('-')[2].split('.')[0]
             input = ",".join(r.split()[1:-1])
             output = r.split()[-1:][0]
-            
-            #print("SAVING: {} {} {} {}".format(input, compiler, opt, output))
 
             if input in key_input.keys():
                 key_comp = key_input[input]
@@ -107,29 +107,30 @@ def saveResults():
         for i in key_input.keys():
             lastInput = list(key_input.keys())[-1]
             # ----
-            print('    "'+i+'": {')
+            print('    "'+i+'": {', file=f)
             for c in key_input[i].keys():
                 lastComp = list(key_input[i].keys())[-1]
                 # ----
-                print('      "'+c+'": {')
+                print('      "'+c+'": {', file=f)
                 for o in key_input[i][c].keys():
                     val = key_input[i][c][o]
                     lastOpt = list(key_input[i][c].keys())[-1]
                     line = '        "'+o+'": "' + val
                     if o != lastOpt:
-                        print(line + '",')
+                        print(line + '",', file=f)
                     else:
-                        print(line + '"')
+                        print(line + '"', file=f)
                 # ----
-                if c != lastComp: print('      },')
-                else: print('      }')
+                if c != lastComp: print('      },', file=f)
+                else: print('      }', file=f)
             # -----
-            if i != lastInput: print('    },')
-            else: print('    }')
+            if i != lastInput: print('    },', file=f)
+            else: print('    }', file=f)
         # ----
-        if k != lastTest: print('  },')
-        else: print('  }')
-    print("}")
+        if k != lastTest: print('  },', file=f)
+        else: print('  }', file=f)
+    print("}", file=f)
+    f.close()
     
 def main():
     global PROG_PER_TEST
@@ -144,7 +145,8 @@ def main():
                 fullPath = dirName+"/"+fname
                 getAllTests(fullPath)
     runTests()
-    print("Saving runs results")
+    print("Saving runs results...")
     saveResults()
+    print("done")
 
 main()
