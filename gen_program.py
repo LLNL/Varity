@@ -9,6 +9,7 @@ import gen_inputs
 MAX_EXPRESSION_SIZE = 6
 MAX_NESTING_LEVELS = 4
 MAX_LINES_IN_BLOCK = 3
+ARRAY_SIZE = 10
 
 # Helper functions
 # This function return True or False randomly
@@ -34,6 +35,8 @@ class IdGenerator():
             IdGenerator.__instance = self
             self.varNames = {}
             self.lastId = 0
+            self.pointers = set({})
+            # Only used locally in functions
             self.tempVarNames = {}
             self.tempLastId = 0
     # ---- singleton accesor ------
@@ -43,10 +46,15 @@ class IdGenerator():
         name = "var_" + str(self.lastId)
         return name
         
+    # --- Double type variables ----------------------------------------------
     # generates double variable
-    def generateDoubleID(self):
+    def generateDoubleID(self, isPointer=False):
         name = self.genID()
-        self.varNames[name] = "double"
+        if isPointer == True:
+            self.varNames[name] = "double*"
+            self.pointers.add(name)
+        else:
+            self.varNames[name] = "double"
         return name
     
     # generates temporal double variable
@@ -127,10 +135,15 @@ class Expression(Node):
     rootNode = None
     variables = set([])
     def __init__(self, code="=", left=None, right=None, varToBeUsed=None):
-        self.code = code
         self.left  = left
         self.right = right
         self.varToBeUsed = varToBeUsed
+        
+        if lucky():
+            self.code = code
+        else:
+            self.code = "+"+code
+            
 
         size = random.randrange(1, MAX_EXPRESSION_SIZE)
 
@@ -187,18 +200,26 @@ class Expression(Node):
         return ret
 
 class VariableDefinition(Node):
-    def __init__(self, code=" = ", left=None, right=None):
+    def __init__(self, code=" = ", left=None, right=None, isPointer=False):
         self.code = code
-        self.left  = "double " + IdGenerator.getInstance().generateTempDoubleID()
         self.right = right
-
+        self.isPointer = isPointer
+        
+        if isPointer == True:
+            self.left  = IdGenerator.getInstance().generateDoubleID(True) + "[i]"
+        else:
+            self.left  = "double " + IdGenerator.getInstance().generateTempDoubleID()
+        
         if lucky(): # constant definition
             self.right = gen_inputs.InputGenerator().genInput()
         else:
             self.right = Expression()
 
     def getVarName(self):
-        return self.left.split(" ")[1]
+        if self.isPointer == False:
+            return self.left.split(" ")[1]
+        else:
+            return self.left
    
     def printCode(self):
         if isinstance(self.right, str):
@@ -208,7 +229,7 @@ class VariableDefinition(Node):
         return self.left + self.code + c + ";"
 
 class OperationsBlock(Node):
-    def __init__(self, code="", left=None, right=None):
+    def __init__(self, code="", left=None, right=None, inLoop=False):
         self.code = code
         self.left  = left
         self.right = right
@@ -239,8 +260,11 @@ class OperationsBlock(Node):
                     l.append(c)
                     if i==lines:
                         break
-                else: 
-                    v = VariableDefinition()
+                else:
+                    if inLoop==True and lucky():
+                        v = VariableDefinition(isPointer=True)
+                    else:
+                        v = VariableDefinition()
                     l.append(v)
                     varsToBeUsed.append(v.getVarName())
                 i = i+1
@@ -330,7 +354,7 @@ class ForLoopBlock(Node):
     def printCode(self):
         t = "for (" + self.code.printCode() + ") {\n"
         if self.left == None:
-            self.left = OperationsBlock()
+            self.left = OperationsBlock(inLoop=True)
         t = t + self.identation + self.left.printCode() + "\n"
         t = t + "}"
         return t
@@ -449,6 +473,9 @@ class Program():
             elif (type == "int"):
                 ret = ret + "  int " + "tmp_" + str(idNum)
                 ret = ret + " = atof(argv[" + str(idNum) + "]);\n"
+            elif (type == "double*"):
+                ret = ret + "  double* " + "tmp_" + str(idNum)
+                ret = ret + " = initPointer( atof(argv[" + str(idNum) + "]) );\n"
 
             idNum = idNum + 1
 
@@ -460,7 +487,15 @@ class Program():
         for k in range(len(IdGenerator.getInstance().getVarsList()) + 1):
             vars.append("tmp_" + str(k+1))
         return ",".join(vars)
-        
+
+    def printPointerInitFunction(self):
+        ret = "\ndouble* initPointer(double v) {\n"
+        ret = ret + "  double *ret = (double*)malloc(sizeof(double)*"+ str(ARRAY_SIZE) +");\n"
+        ret = ret + "  for(int i=0; i < "+ str(ARRAY_SIZE) +"; ++i)\n"
+        ret = ret + "    ret[i] = v;\n"
+        ret = ret + "  return ret;\n"
+        ret = ret + "}"
+        return ret
 
     def printHeader(self):
         h = "\n/* This is a automatically generated test. Do not modify */\n\n"
@@ -469,6 +504,7 @@ class Program():
         if self.device == True:
             h = h + "__global__\n"
         h = h + self.func.printCode()
+        h = h + "\n" + self.printPointerInitFunction()
         h = h + "\n\nint main(int argc, char** argv) {\n"
         h = h + "/* Program variables */\n\n"
         h = h + self.printInputVariables()
@@ -531,26 +567,27 @@ class Program():
 
     def getInput(self):
         allTypes = ",".join(IdGenerator.getInstance().printAllTypes())
+        print("ALL TYPES", allTypes)
         inGen = gen_inputs.InputGenerator()
         input = inGen.genInput() + " "
         for type in allTypes.split(","):
-            if type == "double":
+            if type == "double" or "double*":
                 input = input + inGen.genInput() + " "
             elif type == "int":
                 input = input + "5 "
         return input
 
 if __name__ == "__main__":
-    for i in range(3):
-        p = Program()
-        #(c, allTypes) = p.printCode(True)
-        print(p.printCode()[0])
+    #for i in range(3):
+    p = Program()
+    #(c, allTypes) = p.printCode(True)
+    print(p.printCode()[0])
     #print(p.printCode(True)[0])
     # Compile and run program
-    #p.compileProgram(True)
-    #p.runProgram()
+    p.compileProgram()
+    p.runProgram()
 
-    #o = OperationsBlock()
+    #o = OperationsBlock(inLoop=True)
     #print(o.printCode())
 
     
