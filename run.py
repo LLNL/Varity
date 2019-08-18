@@ -4,7 +4,7 @@ import glob
 import subprocess
 import gen_inputs
 
-INPUT_SAMPLES_PER_RUN = 2
+INPUT_SAMPLES_PER_RUN = 5
 PROG_PER_TEST = {}
 
 # "test.c" ->   [
@@ -27,7 +27,7 @@ def generateInputs(fullProgName):
     inGen = gen_inputs.InputGenerator()
     ret = ""
     for t in types:
-        if t == "double":
+        if t == "double" or "double*":
             i = inGen.genInput()
             ret = ret + i + " "
         if t == "int":
@@ -70,7 +70,9 @@ def runTests():
                     #print("got: " + res)
                     results.append(t + " " + inputs + " " + res)
                 except subprocess.CalledProcessError as outexc:                                                                                                   
-                    print ("Error at runtime:", outexc.returncode, outexc.output)
+                    print("\nError at runtime:", outexc.returncode, outexc.output)
+                    print("CMD", cmd)
+                    exit()
 
         PROG_RESULTS[k] = results
     print("")
