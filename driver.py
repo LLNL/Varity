@@ -1,14 +1,16 @@
 import gen_program
+import run
 import os
 import subprocess
 import sys
+import socket
 
-NUM_GROUPS = 2
-TESTS_PER_GROUP = 5
-#COMPILERS = [("clang_80", "/usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang"), ("gcc_493", "/usr/tce/packages/gcc/gcc-4.9.3/bin/gcc"), ("xlc", "/usr/tce/packages/xl/xl-2019.02.07/bin/xlc"), ("nvcc_92", "/usr/tce/packages/cuda/cuda-9.2.148/bin/nvcc")]
-COMPILERS = [("clang_7", "/Users/lagunaperalt1/projects/GPU_work/latest_llvm/llvm-7.0/install/bin/clang"), ("gcc_7", "/opt/local/bin/gcc-mp-7")]
-#OPT_LEVELS = ["-O0", "-O1", "-O2", "-O3"]
-OPT_LEVELS = ["-O0", "-O1"]
+NUM_GROUPS = 1
+TESTS_PER_GROUP = 2
+COMPILERS = [("clang_80", "/usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang"), ("gcc_493", "/usr/tce/packages/gcc/gcc-4.9.3/bin/gcc"), ("xlc", "/usr/tce/packages/xl/xl-2019.02.07/bin/xlc"), ("nvcc_92", "/usr/tce/packages/cuda/cuda-9.2.148/bin/nvcc")]
+#COMPILERS = [("clang_7", "/Users/lagunaperalt1/projects/GPU_work/latest_llvm/llvm-7.0/install/bin/clang"), ("gcc_7", "/opt/local/bin/gcc-mp-7")]
+OPT_LEVELS = ["-O0", "-O1", "-O2", "-O3"]
+#OPT_LEVELS = ["-O0", "-O1"]
 TESTS_DIR = "_tests"
 
 def writeProgramCode(fileName):
@@ -40,9 +42,16 @@ def compileCode(compiler_name, compiler_path, op_level, dirName, fileName):
         os.chdir(dirName)
 
         if isCUDACompiler(compiler_name):
-            cmd = compiler_path + " -arch=sm_60 " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName+"u"
+            options = ""
+            if op_level == "-O0":
+                options = " --fmad=false "
+            cmd = compiler_path + options + " -arch=sm_60 " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName+"u"
         else:
-            cmd = compiler_path + " -std=c99 " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
+            if "xlc" in compiler_name and op_level == "-O0":
+                options = " -qfloat=nomaf "
+            else:
+                options = ""
+            cmd = compiler_path + options + " -std=c99 " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
 
         out = subprocess.check_output(cmd, shell=True)                    
     except subprocess.CalledProcessError as outexc:                                                                                                   
@@ -89,15 +98,27 @@ def compileTests():
                 for op in OPT_LEVELS:
                     compileCode(compiler_name, compiler_path, op, p, fileName)
     print("")
+    os.chdir(THIS_DIR)
 
 def main():
-    global NUM_GROUPS, TESTS_PER_GROUP
-    
+    global TESTS_DIR, NUM_GROUPS, TESTS_PER_GROUP
+
+    p = socket.gethostname()+"_"+str(os.getpid())
+    try:
+        os.mkdir(p)
+    except OSError:
+        print ("Creation of the directory %s failed" % p)
+
+
+    TESTS_DIR = p + "/" + TESTS_DIR
     print("Generating {} groups, {} tests... ".format(NUM_GROUPS, TESTS_PER_GROUP))
     generateTests()
     print("done!")
     
     print("Compiling tests...")
     compileTests()
+
+    # run tests
+    run.run(p)
 
 main()

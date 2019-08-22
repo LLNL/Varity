@@ -1,0 +1,17 @@
+#!/bin/bash
+#BSUB -nnodes 32
+#BSUB -q pbatch
+#BSUB -G asccasc
+#BSUB -W 120
+
+date
+
+#rm -rf ./_tests
+#lrun -T1 -N4 rm -rf $HOSTNAME &
+lrun -T4 -N32 python3 printHost.py
+lrun -T4 -N32 python3 ./driver.py
+#lrun -T8 -N8 python3 ./run.py
+
+wait
+
+date
