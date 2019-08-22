@@ -3,6 +3,7 @@ import sys
 import glob
 import subprocess
 import gen_inputs
+import socket
 
 INPUT_SAMPLES_PER_RUN = 2
 PROG_PER_TEST = {}
@@ -27,10 +28,10 @@ def generateInputs(fullProgName):
     inGen = gen_inputs.InputGenerator()
     ret = ""
     for t in types:
-        if t == "double" or "double*":
+        if t == "double" or t == "double*":
             i = inGen.genInput()
             ret = ret + i + " "
-        if t == "int":
+        elif t == "int":
             ret = ret + "5 "
     return ret
 
@@ -77,10 +78,12 @@ def runTests():
         PROG_RESULTS[k] = results
     print("")
 
-def saveResults():
+def saveResults(rootDir):
     global PROG_RESULTS
-    
-    f = open("results.json", "w")
+ 
+    os.chdir(rootDir)   
+    f = open("./results.json", "w")
+#    f = open(rootDir+"-results.json", "w")
     print("{", file=f)
     for k in PROG_RESULTS.keys():
         lastTest = list(PROG_RESULTS.keys())[-1]
@@ -132,12 +135,14 @@ def saveResults():
     print("}", file=f)
     f.close()
     
-def main():
+def run(d):
     global PROG_PER_TEST
     
     # Dir to walk
-    rootDir = sys.argv[1]
-    
+    #rootDir = sys.argv[1]
+    #rootDir = socket.gethostname()+"-"+str(os.getpid())
+    rootDir = "./"+d    
+
     # Walk on the directory tree
     for dirName, subdirList, fileList in os.walk(rootDir):
         for fname in fileList:
@@ -146,7 +151,9 @@ def main():
                 getAllTests(fullPath)
     runTests()
     print("Saving runs results...")
-    saveResults()
+    saveResults(rootDir)
     print("done")
 
-main()
+if __name__ == "__main__":
+    d = sys.argv[1]
+    run(d)

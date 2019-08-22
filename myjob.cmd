@@ -1,8 +1,8 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pbatch
+#BSUB -q pdebug
 #BSUB -G guests
-#BSUB -W 180
+#BSUB -W 59
 
 date
 
