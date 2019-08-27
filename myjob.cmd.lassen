@@ -2,7 +2,7 @@
 #BSUB -nnodes 32
 #BSUB -q pbatch
 #BSUB -G asccasc
-#BSUB -W 120
+#BSUB -W 60
 
 date
 

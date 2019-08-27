@@ -5,7 +5,7 @@ import subprocess
 import gen_inputs
 import socket
 
-INPUT_SAMPLES_PER_RUN = 2
+INPUT_SAMPLES_PER_RUN = 10
 PROG_PER_TEST = {}
 
 # "test.c" ->   [
