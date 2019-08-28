@@ -4,6 +4,7 @@ import random
 import gen_inputs
 import subprocess
 import gen_inputs
+import gen_math_exp
 
 # Global sampling parameters
 MAX_EXPRESSION_SIZE = 6
@@ -15,6 +16,9 @@ ARRAY_SIZE = 10
 # This function return True or False randomly
 def lucky():
     return random.randrange(0, 2) == 0
+# 1/4 probability of success
+def veryLucky():
+    return random.randrange(0, 4) == 3
 
 class IdGenerator():
     __instance = None
@@ -133,7 +137,7 @@ class BinaryOperation(Node):
 class Expression(Node):
     global MAX_EXPRESSION_SIZE
     rootNode = None
-    variables = set([])
+    #variables = set([])
     def __init__(self, code="=", left=None, right=None, varToBeUsed=None):
         self.left  = left
         self.right = right
@@ -144,27 +148,35 @@ class Expression(Node):
         else:
             self.code = "+"+code
             
-
         size = random.randrange(1, MAX_EXPRESSION_SIZE)
 
         lastOp = None
+        mathExpTerminator = None
         while (size >= 1):
-            op = BinaryOperation()
-            op.generate()
-            op.left = None  
-            op.right = None
+            if veryLucky():
+                op = gen_math_exp.MathExpression()
+                mathExpTerminator = True
+            else:
+                op = BinaryOperation()
+                op.generate()
+            #op.left = None  
+            #op.right = None
             
             # Update variable lists
-            self.variables.add(op.left)
-            self.variables.add(op.right)
+            #self.variables.add(op.left)
+            #self.variables.add(op.right)
             
             if lastOp != None:
-                self.variables.remove(lastOp.right)
+                #self.variables.remove(lastOp.right)
                 lastOp.right = op
             else:
                 self.rootNode = op
             lastOp = op
             size = size - 1
+
+            # If we have a math expression, this is a terminator for the tree
+            if mathExpTerminator == True:
+                break
 
     def total(self, n):
         if n == None:
@@ -175,6 +187,9 @@ class Expression(Node):
             return n
         elif isinstance(n, str):
             return n
+        elif isinstance(n, gen_math_exp.MathExpression):
+            return n.printCode()
+        
         ret = Expression.total(self, n.left) + n.code + Expression.total(self, n.right)
         if lucky():
             return '(' + ret + ')'
@@ -192,12 +207,13 @@ class Expression(Node):
             return "comp " + self.code + " " + t + ";"
         else:
             return t
+        
 
-    def getVariableDefinitions(self):
-        ret = ""
-        for v in self.variables:
-            ret = ret + "double " + v + ";\n"
-        return ret
+#    def getVariableDefinitions(self):
+#        ret = ""
+#        for v in self.variables:
+#            ret = ret + "double " + v + ";\n"
+#        return ret
 
 class VariableDefinition(Node):
     def __init__(self, code=" = ", left=None, right=None, isPointer=False):
@@ -500,7 +516,8 @@ class Program():
     def printHeader(self):
         h = "\n/* This is a automatically generated test. Do not modify */\n\n"
         h = h + "#include <stdio.h>\n"
-        h = h + "#include <stdlib.h>\n\n"
+        h = h + "#include <stdlib.h>\n"
+        h = h + "#include <math.h>\n\n"
         if self.device == True:
             h = h + "__global__\n"
         h = h + self.func.printCode()
@@ -583,9 +600,10 @@ if __name__ == "__main__":
     #(c, allTypes) = p.printCode(True)
     print(p.printCode()[0])
     #print(p.printCode(True)[0])
-    # Compile and run program
-    p.compileProgram()
-    p.runProgram()
+    
+    # Compile and run program 
+    #p.compileProgram()
+    #p.runProgram()
 
     #o = OperationsBlock(inLoop=True)
     #print(o.printCode())
