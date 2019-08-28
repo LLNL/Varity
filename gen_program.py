@@ -5,94 +5,14 @@ import gen_inputs
 import subprocess
 import gen_inputs
 import gen_math_exp
+import id_generator
+from random_functions import lucky, veryLucky
 
 # Global sampling parameters
 MAX_EXPRESSION_SIZE = 6
 MAX_NESTING_LEVELS = 4
 MAX_LINES_IN_BLOCK = 3
 ARRAY_SIZE = 10
-
-# Helper functions
-# This function return True or False randomly
-def lucky():
-    return random.randrange(0, 2) == 0
-# 1/4 probability of success
-def veryLucky():
-    return random.randrange(0, 4) == 3
-
-class IdGenerator():
-    __instance = None
-    
-    # ---- singleton accesor ------
-    @staticmethod 
-    def getInstance():
-        """ Static access method. """
-        if IdGenerator.__instance == None:
-            IdGenerator()
-        return IdGenerator.__instance
-            
-    def __init__(self):
-        """ Virtually private constructor. """
-        if IdGenerator.__instance != None:
-            raise Exception("This class is a singleton!")
-        else:
-            IdGenerator.__instance = self
-            self.varNames = {}
-            self.lastId = 0
-            self.pointers = set({})
-            # Only used locally in functions
-            self.tempVarNames = {}
-            self.tempLastId = 0
-    # ---- singleton accesor ------
-    
-    def genID(self):
-        self.lastId = self.lastId + 1
-        name = "var_" + str(self.lastId)
-        return name
-        
-    # --- Double type variables ----------------------------------------------
-    # generates double variable
-    def generateDoubleID(self, isPointer=False):
-        name = self.genID()
-        if isPointer == True:
-            self.varNames[name] = "double*"
-            self.pointers.add(name)
-        else:
-            self.varNames[name] = "double"
-        return name
-    
-    # generates temporal double variable
-    def generateTempDoubleID(self):
-        self.tempLastId = self.tempLastId + 1
-        name = "tmp_" + str(self.tempLastId)
-        self.tempVarNames[name] = "double"
-        return name
-
-    # generate int variable
-    def generateIntID(self):
-        name = self.genID()
-        self.varNames[name] = "int"
-        return name
-
-    # returns a list    
-    def printAllVars(self):
-        ret = []
-        for k in self.varNames.keys():
-            ret.append(self.varNames[k] + " " + k)
-        return ret
-    
-    def printAllTypes(self):
-        ret = []
-        for k in self.varNames.keys():
-            ret.append(self.varNames[k])
-        return ret
-
-    def getVarsList(self):
-        return self.varNames
-    
-    def clear(self):
-        self.varNames.clear()
-        self.lastId = 0
 
 # Basic node in a tree
 class Node:
@@ -137,7 +57,6 @@ class BinaryOperation(Node):
 class Expression(Node):
     global MAX_EXPRESSION_SIZE
     rootNode = None
-    #variables = set([])
     def __init__(self, code="=", left=None, right=None, varToBeUsed=None):
         self.left  = left
         self.right = right
@@ -159,15 +78,8 @@ class Expression(Node):
             else:
                 op = BinaryOperation()
                 op.generate()
-            #op.left = None  
-            #op.right = None
-            
-            # Update variable lists
-            #self.variables.add(op.left)
-            #self.variables.add(op.right)
             
             if lastOp != None:
-                #self.variables.remove(lastOp.right)
                 lastOp.right = op
             else:
                 self.rootNode = op
@@ -183,7 +95,7 @@ class Expression(Node):
             if lucky():
                 n = gen_inputs.InputGenerator().genInput()
             else:
-                n = IdGenerator.getInstance().generateDoubleID()
+                n = id_generator.IdGenerator.get().generateDoubleID()
             return n
         elif isinstance(n, str):
             return n
@@ -207,13 +119,7 @@ class Expression(Node):
             return "comp " + self.code + " " + t + ";"
         else:
             return t
-        
 
-#    def getVariableDefinitions(self):
-#        ret = ""
-#        for v in self.variables:
-#            ret = ret + "double " + v + ";\n"
-#        return ret
 
 class VariableDefinition(Node):
     def __init__(self, code=" = ", left=None, right=None, isPointer=False):
@@ -222,9 +128,9 @@ class VariableDefinition(Node):
         self.isPointer = isPointer
         
         if isPointer == True:
-            self.left  = IdGenerator.getInstance().generateDoubleID(True) + "[i]"
+            self.left  = id_generator.IdGenerator.get().generateDoubleID(True) + "[i]"
         else:
-            self.left  = "double " + IdGenerator.getInstance().generateTempDoubleID()
+            self.left  = "double " + id_generator.IdGenerator.get().generateTempDoubleID()
         
         if lucky(): # constant definition
             self.right = gen_inputs.InputGenerator().genInput()
@@ -325,7 +231,7 @@ class BooleanExpression(Node):
 
 class FoorLoopCondition(Node):
     def __init__(self, code="", left=None, right=None):
-        self.code = "int i=0; i < " + IdGenerator.getInstance().generateIntID() + "; ++i"
+        self.code = "int i=0; i < " + id_generator.IdGenerator.get().generateIntID() + "; ++i"
     
     def printCode(self):
         return self.code
@@ -447,9 +353,9 @@ class FunctionCall(Node):
         #    h = h + "__global__ "
         h = h + "void compute("
         h = h + "double comp"
-        if len(IdGenerator.getInstance().printAllVars()) > 0:
+        if len(id_generator.IdGenerator.get().printAllVars()) > 0:
             h = h + ", "
-        h = h + ",".join(IdGenerator.getInstance().printAllVars())
+        h = h + ",".join(id_generator.IdGenerator.get().printAllVars())
         h = h + ") {\n"
         return h
 
@@ -469,15 +375,12 @@ class FunctionCall(Node):
 
 class Program():
     def __init__(self):
-        IdGenerator.getInstance().clear()
-        #self.idGen = IdGenerator()
+        id_generator.IdGenerator.get().clear()
         self.func = FunctionCall()
-        #self.device = device
-        #print (f.printCode())
         
     def printInputVariables(self):
         ret = ""
-        vars = IdGenerator.getInstance().getVarsList()
+        vars = id_generator.IdGenerator.get().getVarsList()
         
         ret = ret + "  double " + "tmp_1 = atof(argv[1]);\n"
         idNum = 2
@@ -500,7 +403,7 @@ class Program():
     
     def printFunctionParameters(self):
         vars = []
-        for k in range(len(IdGenerator.getInstance().getVarsList()) + 1):
+        for k in range(len(id_generator.IdGenerator.get().getVarsList()) + 1):
             vars.append("tmp_" + str(k+1))
         return ",".join(vars)
 
@@ -540,7 +443,7 @@ class Program():
         # finalize main function
         c = c + "\n  return 0;\n"
         c = c + "}\n"
-        allTypes = ",".join(IdGenerator.getInstance().printAllTypes())
+        allTypes = ",".join(id_generator.IdGenerator.get().printAllTypes())
         return (c, allTypes)
         
     def compileProgram(self, device=False):
@@ -583,7 +486,7 @@ class Program():
             print ("Error at runtime:", outexc.returncode, outexc.output)
 
     def getInput(self):
-        allTypes = ",".join(IdGenerator.getInstance().printAllTypes())
+        allTypes = ",".join(id_generator.IdGenerator.get().printAllTypes())
         print("ALL TYPES", allTypes)
         inGen = gen_inputs.InputGenerator()
         input = inGen.genInput() + " "
@@ -602,8 +505,8 @@ if __name__ == "__main__":
     #print(p.printCode(True)[0])
     
     # Compile and run program 
-    #p.compileProgram()
-    #p.runProgram()
+    p.compileProgram()
+    p.runProgram()
 
     #o = OperationsBlock(inLoop=True)
     #print(o.printCode())

@@ -1,12 +1,14 @@
 
 from enum import Enum
 import random
+from random_functions import lucky, veryLucky
 
 class FPNumberType(Enum):
     normal = 0
     subnormal = 1
     almost_overflow = 2
     almost_underflow = 3
+    zero = 4
 
 # This class gererates random floating-point inputs.
 # It considers several cases:
@@ -14,6 +16,7 @@ class FPNumberType(Enum):
 #   (2) Almost overflow
 #   (3) Almost underflow
 #   (4) Subnormal (underflow)
+#   (5) zero (positive or negative)
 class InputGenerator:
 
     def genInput(self):
@@ -31,6 +34,10 @@ class InputGenerator:
         elif x == FPNumberType.almost_underflow:
             n = InputGenerator.getAlmostUnderflow()
             #print("almost_underflow {}".format(n))
+        elif x == FPNumberType.zero:
+            n = "0"
+            if lucky():
+                n = "-0"
         else:
             n = ret
         
