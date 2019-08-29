@@ -13,6 +13,7 @@ MAX_EXPRESSION_SIZE = 6
 MAX_NESTING_LEVELS = 4
 MAX_LINES_IN_BLOCK = 3
 ARRAY_SIZE = 10
+MAX_SAME_LEVEL_BLOCKS = 2
 
 # Basic node in a tree
 class Node:
@@ -24,7 +25,7 @@ class Node:
     def __str__(self):
         return str(self.code)
 
-    def printCode(self):
+    def printCode(self) -> str:
         return "{};\n"
 
 # Types of binary operations
@@ -51,7 +52,7 @@ class BinaryOperation(Node):
         elif op == BinaryOperationType.div:
             self.code = " / "
 
-    def printCode(self):
+    def printCode(self) -> str:
         return self.code
 
 class Expression(Node):
@@ -107,7 +108,7 @@ class Expression(Node):
             return '(' + ret + ')'
         return ret
 
-    def printCode(self, assignment=True):
+    def printCode(self, assignment=True) -> str:
         t = Expression.total(self, self.rootNode)
         if self.varToBeUsed != None:
             for v in self.varToBeUsed:
@@ -143,27 +144,28 @@ class VariableDefinition(Node):
         else:
             return self.left
    
-    def printCode(self):
+    def printCode(self) -> str:
         if isinstance(self.right, str):
             c = self.right
         else:
             c = self.right.printCode(False)
         return self.left + self.code + c + ";"
 
+# A non-recursive block has only expressions (it does not have if-blocks or loop-blocks)
 class OperationsBlock(Node):
-    def __init__(self, code="", left=None, right=None, inLoop=False):
+    def __init__(self, code="", left=None, right=None, inLoop=False, recursive=True):
         self.code = code
         self.left  = left
         self.right = right
         
-        # Define the number of lines that the block will have
+        # Defines the number of lines that the block will have
         lines = random.randrange(1, MAX_LINES_IN_BLOCK+1)
         assert lines > 0
 
-        # In the block we either have definitions of new variables or 
-        # assigments to comp.
-        # The last line of the block will always be 
-        # an assigment from an expression.
+        # In the block, we either have definitions of new variables or 
+        # assigments to comp. The last line of the block will always be 
+        # an assigment from an expression:
+        #    comp = ...
         if lines == 1:
             self.left = [Expression()]
         else:
@@ -192,7 +194,19 @@ class OperationsBlock(Node):
                 i = i+1
             self.left = l
 
-    def printCode(self):
+        # An operations block can also have if-conditions and loop blocks
+        if recursive:
+            print("--> adding non recursive if")
+            nBlocks = random.randrange(0, MAX_SAME_LEVEL_BLOCKS+1)
+            #nBlocks = 2
+            for k in range(nBlocks):
+                if lucky():
+                    b = IfConditionBlock(recursive=False)
+                else:
+                    b = ForLoopBlock(recursive=False)
+                self.left.append(b)
+                    
+    def printCode(self) -> str:
         ret = []
         for l in self.left:
             ret.append( l.printCode() )
@@ -222,38 +236,36 @@ class BooleanExpression(Node):
             self.code = " <= "
 
         self.left = "comp"
-        #fpVal = gen_inputs.InputGenerator()
-        #self.right = fpVal.genInput()
         self.right = Expression()
 
-    def printCode(self):
+    def printCode(self) -> str:
         return self.left + self.code + self.right.printCode(False)
 
 class FoorLoopCondition(Node):
     def __init__(self, code="", left=None, right=None):
         self.code = "int i=0; i < " + id_generator.IdGenerator.get().generateIntID() + "; ++i"
     
-    def printCode(self):
+    def printCode(self) -> str:
         return self.code
     
 class IfConditionBlock(Node):
-    def __init__(self, level=1, code=None, left=None, right=None):
+    def __init__(self, level=1, code=None, left=None, right=None, recursive=True):
         self.level = level
         self.identation = ''
         self.identation += '  ' * self.level
+        self.rec = recursive
         
         # Generate code of the boolean expresion (default)
         self.code = BooleanExpression()
         
         # Generate code inside the block
-        #self.left = OperationsBlock()
         self.left = left
         self.right = "break;"
 
-    def printCode(self):
+    def printCode(self) -> str:
         t = "if (" + self.code.printCode() + ") {\n"
         if self.left == None:
-            self.left = OperationsBlock()
+            self.left = OperationsBlock(recursive=self.rec)
         t = t + self.identation + self.left.printCode() + "\n"
         t = t + "}"
         return t
@@ -262,10 +274,11 @@ class IfConditionBlock(Node):
         self.left = c
 
 class ForLoopBlock(Node):
-    def __init__(self, level=1, code=None, left=None, right=None):
+    def __init__(self, level=1, code=None, left=None, right=None, recursive=True):
         self.level = level
         self.identation = ''
         self.identation += '  ' * self.level
+        self.rec = recursive
 
         # Generate code of the loop condition
         self.code = FoorLoopCondition()
@@ -273,10 +286,10 @@ class ForLoopBlock(Node):
         self.left = left
         self.right = None
 
-    def printCode(self):
+    def printCode(self) -> str:
         t = "for (" + self.code.printCode() + ") {\n"
         if self.left == None:
-            self.left = OperationsBlock(inLoop=True)
+            self.left = OperationsBlock(inLoop=True, recursive=self.rec)
         t = t + self.identation + self.left.printCode() + "\n"
         t = t + "}"
         return t
@@ -362,7 +375,7 @@ class FunctionCall(Node):
     def writePrintStatement(self):
         return '\n   printf("%.17g\\n", comp);\n'
         
-    def printCode(self):
+    def printCode(self) -> str:
         if self.codeCache != None:
             return self.codeCache
 
@@ -391,7 +404,7 @@ class Program():
                 ret = ret + " = atof(argv[" + str(idNum) + "]);\n"
             elif (type == "int"):
                 ret = ret + "  int " + "tmp_" + str(idNum)
-                ret = ret + " = atof(argv[" + str(idNum) + "]);\n"
+                ret = ret + " = atoi(argv[" + str(idNum) + "]);\n"
             elif (type == "double*"):
                 ret = ret + "  double* " + "tmp_" + str(idNum)
                 ret = ret + " = initPointer( atof(argv[" + str(idNum) + "]) );\n"
@@ -430,7 +443,7 @@ class Program():
         h = h + self.printInputVariables()
         return h
 
-    def printCode(self, device=False):
+    def printCode(self, device=False) -> (str,str):
         self.device = device
         c = self.printHeader()
         # call the function
@@ -490,8 +503,9 @@ class Program():
         print("ALL TYPES", allTypes)
         inGen = gen_inputs.InputGenerator()
         input = inGen.genInput() + " "
-        for type in allTypes.split(","):
-            if type == "double" or "double*":
+        typeList = allTypes.split(",")
+        for type in typeList:
+            if type == "double" or type == "double*":
                 input = input + inGen.genInput() + " "
             elif type == "int":
                 input = input + "5 "

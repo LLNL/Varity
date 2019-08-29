@@ -35,9 +35,9 @@ class InputGenerator:
             n = InputGenerator.getAlmostUnderflow()
             #print("almost_underflow {}".format(n))
         elif x == FPNumberType.zero:
-            n = "0"
+            n = "+0.0"
             if lucky():
-                n = "-0"
+                n = "-0.0"
         else:
             n = ret
         
