@@ -1,21 +1,15 @@
 import gen_program
+import cfg
 import run
 import os
 import subprocess
 import sys
 import socket
 
-NUM_GROUPS = 1
-TESTS_PER_GROUP = 10
-COMPILERS = [("clang_80", "/usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang"), ("gcc_721", "/usr/tce/packages/gcc/gcc-7.2.1-redhat/bin/gcc"), ("xlc", "/usr/tce/packages/xl/xl-2019.02.07/bin/xlc"), ("nvcc_92", "/usr/tce/packages/cuda/cuda-9.2.148/bin/nvcc")]
-#COMPILERS = [("clang_7", "/Users/lagunaperalt1/projects/GPU_work/latest_llvm/llvm-7.0/install/bin/clang"), ("gcc_7", "/opt/local/bin/gcc-mp-7")]
-OPT_LEVELS = ["-O0", "-O1", "-O2", "-O3"]
-#OPT_LEVELS = ["-O0", "-O1"]
-TESTS_DIR = "_tests"
-
 def writeProgramCode(fileName):
     # Write C code
     p = gen_program.Program()
+    #p = Program()
     (code, allTypes) = p.printCode()
     writeInputFile(fileName, allTypes)
     f = open(fileName, "w")
@@ -61,13 +55,11 @@ def compileCode(compiler_name, compiler_path, op_level, dirName, fileName):
         print("Error at compile time:", outexc.returncode, outexc.output)
         print("FAILED: ", cmd)
 
-def generateTests():
-    global NUM_GROUPS, TESTS_PER_GROUP, COMPILERS, TESTS_DIR
-    
-    for g in range(NUM_GROUPS):
+def generateTests():    
+    for g in range(cfg.NUM_GROUPS):
         
         # Create directory
-        p = TESTS_DIR + "/_group_" + str(g+1)
+        p = cfg.TESTS_DIR + "/_group_" + str(g+1)
         try:
             os.makedirs(p)
         except FileExistsError:
@@ -75,37 +67,34 @@ def generateTests():
             pass
         
         # Write code
-        for t in range(TESTS_PER_GROUP): 
+        for t in range(cfg.TESTS_PER_GROUP): 
             fileName = p + "/_test_" + str(t+1) + ".c"
             writeProgramCode(fileName)
 
 def compileTests():
-    global NUM_GROUPS, TESTS_PER_GROUP, COMPILERS, TESTS_DIR
     
-    print("Total tests to compile: ", NUM_GROUPS*TESTS_PER_GROUP)
+    print("Total tests to compile: ", cfg.NUM_GROUPS*cfg.TESTS_PER_GROUP)
     count = 1
 
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    for g in range(NUM_GROUPS):
-        p = THIS_DIR + "/" + TESTS_DIR + "/_group_" + str(g+1)
-        for t in range(TESTS_PER_GROUP):
+    for g in range(cfg.NUM_GROUPS):
+        p = THIS_DIR + "/" + cfg.TESTS_DIR + "/_group_" + str(g+1)
+        for t in range(cfg.TESTS_PER_GROUP):
             # --- print progress ---
             print("\r--> Compiling test: {}".format(count), end='')
             sys.stdout.flush()
             count = count + 1
             # ---------------------- 
             fileName = "_test_" + str(t+1) + ".c"
-            for c in COMPILERS:
+            for c in cfg.COMPILERS:
                 compiler_name = c[0]
                 compiler_path = c[1]
-                for op in OPT_LEVELS:
+                for op in cfg.OPT_LEVELS:
                     compileCode(compiler_name, compiler_path, op, p, fileName)
     print("")
     os.chdir(THIS_DIR)
 
 def main():
-    global TESTS_DIR, NUM_GROUPS, TESTS_PER_GROUP
-
     p = socket.gethostname()+"_"+str(os.getpid())
     try:
         os.mkdir(p)
@@ -113,8 +102,8 @@ def main():
         print ("Creation of the directory %s failed" % p)
 
 
-    TESTS_DIR = p + "/" + TESTS_DIR
-    print("Generating {} groups, {} tests... ".format(NUM_GROUPS, TESTS_PER_GROUP))
+    cfg.TESTS_DIR = p + "/" + cfg.TESTS_DIR
+    print("Generating {} groups, {} tests... ".format(cfg.NUM_GROUPS, cfg.TESTS_PER_GROUP))
     generateTests()
     print("done!")
     

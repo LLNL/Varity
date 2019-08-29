@@ -4,16 +4,10 @@ import random
 import gen_inputs
 import subprocess
 import gen_inputs
-import gen_math_exp
+#import gen_math_exp
 import id_generator
+import cfg
 from random_functions import lucky, veryLucky
-
-# Global sampling parameters
-MAX_EXPRESSION_SIZE = 6
-MAX_NESTING_LEVELS = 4
-MAX_LINES_IN_BLOCK = 3
-ARRAY_SIZE = 10
-MAX_SAME_LEVEL_BLOCKS = 2
 
 # Basic node in a tree
 class Node:
@@ -56,9 +50,9 @@ class BinaryOperation(Node):
         return self.code
 
 class Expression(Node):
-    global MAX_EXPRESSION_SIZE
     rootNode = None
     def __init__(self, code="=", left=None, right=None, varToBeUsed=None):
+        import gen_math_exp
         self.left  = left
         self.right = right
         self.varToBeUsed = varToBeUsed
@@ -68,7 +62,7 @@ class Expression(Node):
         else:
             self.code = "+"+code
             
-        size = random.randrange(1, MAX_EXPRESSION_SIZE)
+        size = random.randrange(1, cfg.MAX_EXPRESSION_SIZE)
 
         lastOp = None
         mathExpTerminator = None
@@ -92,6 +86,7 @@ class Expression(Node):
                 break
 
     def total(self, n):
+        import gen_math_exp
         if n == None:
             if lucky():
                 n = gen_inputs.InputGenerator().genInput()
@@ -159,7 +154,7 @@ class OperationsBlock(Node):
         self.right = right
         
         # Defines the number of lines that the block will have
-        lines = random.randrange(1, MAX_LINES_IN_BLOCK+1)
+        lines = random.randrange(1, cfg.MAX_LINES_IN_BLOCK+1)
         assert lines > 0
 
         # In the block, we either have definitions of new variables or 
@@ -196,8 +191,7 @@ class OperationsBlock(Node):
 
         # An operations block can also have if-conditions and loop blocks
         if recursive:
-            print("--> adding non recursive if")
-            nBlocks = random.randrange(0, MAX_SAME_LEVEL_BLOCKS+1)
+            nBlocks = random.randrange(0, cfg.MAX_SAME_LEVEL_BLOCKS+1)
             #nBlocks = 2
             for k in range(nBlocks):
                 if lucky():
@@ -304,7 +298,7 @@ class CodeBlock(Enum):
 #    while_loop = 4
 
 class FunctionCall(Node):
-    global MAX_NESTING_LEVELS
+    #global MAX_NESTING_LEVELS
     
     def __init__(self, code=None, left=None, right=None):
         #self.device = device
@@ -315,7 +309,7 @@ class FunctionCall(Node):
         self.codeCache = None # If the code was printed will be saved here    
     
         # Sample the blocks and levels of the function
-        levels = random.randrange(1, MAX_NESTING_LEVELS+1)
+        levels = random.randrange(1, cfg.MAX_NESTING_LEVELS+1)
         #levels = 2
         #print("levels: {}".format(levels))
         lastBlock = None
@@ -422,8 +416,8 @@ class Program():
 
     def printPointerInitFunction(self):
         ret = "\ndouble* initPointer(double v) {\n"
-        ret = ret + "  double *ret = (double*)malloc(sizeof(double)*"+ str(ARRAY_SIZE) +");\n"
-        ret = ret + "  for(int i=0; i < "+ str(ARRAY_SIZE) +"; ++i)\n"
+        ret = ret + "  double *ret = (double*)malloc(sizeof(double)*"+ str(cfg.ARRAY_SIZE) +");\n"
+        ret = ret + "  for(int i=0; i < "+ str(cfg.ARRAY_SIZE) +"; ++i)\n"
         ret = ret + "    ret[i] = v;\n"
         ret = ret + "  return ret;\n"
         ret = ret + "}"

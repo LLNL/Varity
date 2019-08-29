@@ -3,9 +3,9 @@ import sys
 import glob
 import subprocess
 import gen_inputs
+import cfg
 import socket
 
-INPUT_SAMPLES_PER_RUN = 10
 PROG_PER_TEST = {}
 
 # "test.c" ->   [
@@ -60,7 +60,7 @@ def runTests():
 
         fullProgName = k
         results = []
-        for n in range(INPUT_SAMPLES_PER_RUN):
+        for n in range(cfg.INPUT_SAMPLES_PER_RUN):
             inputs = generateInputs(fullProgName)
             for t in PROG_PER_TEST[k]:
                 try:

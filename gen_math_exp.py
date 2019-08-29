@@ -1,6 +1,5 @@
 
 import gen_program
-from gen_program import Node
 import random
 import gen_inputs
 from random_functions import lucky, veryLucky
@@ -27,7 +26,7 @@ MathFunctions = [
                  "fmod(double,double)"
                  ]
 
-class MathExpression(Node):
+class MathExpression(gen_program.Node):
     def __init__(self, code="", left=None, right=None):
         self.code = code
         self.left  = left
@@ -43,7 +42,7 @@ class MathExpression(Node):
         #print("Types:", types)
         for t in types:
             if t == "double":
-                if gen_program.veryLucky():
+                if veryLucky():
                     self.parameters.append(gen_inputs.InputGenerator().genInput() )
                 else:
                     self.parameters.append(gen_program.Expression())
