@@ -8,6 +8,7 @@ import gen_inputs
 import id_generator
 import cfg
 from random_functions import lucky, veryLucky
+from type_checking import getTypeString, isTypeReal, isTypeRealPointer, isTypeInt
 
 # Basic node in a tree
 class Node:
@@ -89,9 +90,9 @@ class Expression(Node):
         import gen_math_exp
         if n == None:
             if lucky():
-                n = gen_inputs.InputGenerator().genInput()
+                n = gen_inputs.InputGenerator.genInput()
             else:
-                n = id_generator.IdGenerator.get().generateDoubleID()
+                n = id_generator.IdGenerator.get().generateRealID()
             return n
         elif isinstance(n, str):
             return n
@@ -124,12 +125,12 @@ class VariableDefinition(Node):
         self.isPointer = isPointer
         
         if isPointer == True:
-            self.left  = id_generator.IdGenerator.get().generateDoubleID(True) + "[i]"
+            self.left  = id_generator.IdGenerator.get().generateRealID(True) + "[i]"
         else:
-            self.left  = "double " + id_generator.IdGenerator.get().generateTempDoubleID()
+            self.left  = getTypeString() + " " + id_generator.IdGenerator.get().generateTempRealID()
         
         if lucky(): # constant definition
-            self.right = gen_inputs.InputGenerator().genInput()
+            self.right = gen_inputs.InputGenerator.genInput()
         else:
             self.right = Expression()
 
@@ -359,7 +360,7 @@ class FunctionCall(Node):
         #if self.device == True:
         #    h = h + "__global__ "
         h = h + "void compute("
-        h = h + "double comp"
+        h = h + getTypeString() + " comp"
         if len(id_generator.IdGenerator.get().printAllVars()) > 0:
             h = h + ", "
         h = h + ",".join(id_generator.IdGenerator.get().printAllVars())
@@ -389,18 +390,18 @@ class Program():
         ret = ""
         vars = id_generator.IdGenerator.get().getVarsList()
         
-        ret = ret + "  double " + "tmp_1 = atof(argv[1]);\n"
+        ret = ret + "  " + getTypeString() + " " + "tmp_1 = atof(argv[1]);\n"
         idNum = 2
         for k in vars.keys():
             type = vars[k]
-            if (type == "double"):
-                ret = ret + "  double " + "tmp_" + str(idNum)
+            if (isTypeReal(type)):
+                ret = ret + "  " + getTypeString() + " " + "tmp_" + str(idNum)
                 ret = ret + " = atof(argv[" + str(idNum) + "]);\n"
-            elif (type == "int"):
+            elif (isTypeInt(type)):
                 ret = ret + "  int " + "tmp_" + str(idNum)
                 ret = ret + " = atoi(argv[" + str(idNum) + "]);\n"
-            elif (type == "double*"):
-                ret = ret + "  double* " + "tmp_" + str(idNum)
+            elif (isTypeRealPointer(type)):
+                ret = ret + "  "+type+" " + "tmp_" + str(idNum)
                 ret = ret + " = initPointer( atof(argv[" + str(idNum) + "]) );\n"
 
             idNum = idNum + 1
@@ -415,8 +416,9 @@ class Program():
         return ",".join(vars)
 
     def printPointerInitFunction(self):
-        ret = "\ndouble* initPointer(double v) {\n"
-        ret = ret + "  double *ret = (double*)malloc(sizeof(double)*"+ str(cfg.ARRAY_SIZE) +");\n"
+        ret = "\n"+getTypeString()+"* initPointer("+getTypeString()+" v) {\n"
+        ret = ret + "  "+getTypeString()+" *ret = "
+        ret = ret + "("+getTypeString()+"*) malloc(sizeof("+getTypeString()+")*"+ str(cfg.ARRAY_SIZE) +");\n"
         ret = ret + "  for(int i=0; i < "+ str(cfg.ARRAY_SIZE) +"; ++i)\n"
         ret = ret + "    ret[i] = v;\n"
         ret = ret + "  return ret;\n"
@@ -495,13 +497,13 @@ class Program():
     def getInput(self):
         allTypes = ",".join(id_generator.IdGenerator.get().printAllTypes())
         print("ALL TYPES", allTypes)
-        inGen = gen_inputs.InputGenerator()
-        input = inGen.genInput() + " "
+        #inGen = gen_inputs.InputGenerator()
+        input = gen_inputs.InputGenerator.genInput() + " "
         typeList = allTypes.split(",")
         for type in typeList:
-            if type == "double" or type == "double*":
-                input = input + inGen.genInput() + " "
-            elif type == "int":
+            if isTypeReal(type) or isTypeRealPointer(type):
+                input = input + gen_inputs.InputGenerator.genInput() + " "
+            elif isTypeInt(type):
                 input = input + "5 "
         return input
 

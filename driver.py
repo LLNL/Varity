@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import socket
+import type_checking
 
 def writeProgramCode(fileName):
     # Write C code
@@ -24,7 +25,7 @@ def writeProgramCode(fileName):
 
 def writeInputFile(fileName, allTypes):
     f = open(fileName+".input", "w")
-    f.write("double,")
+    f.write(type_checking.getTypeString()+",")
     f.write(allTypes+"\n")
     f.close()
 

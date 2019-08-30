@@ -1,4 +1,5 @@
 
+from type_checking import getTypeString
 
 class IdGenerator():
     __instance = None
@@ -30,23 +31,27 @@ class IdGenerator():
         name = "var_" + str(self.lastId)
         return name
     
-    # --- Double type variables ----------------------------------------------
-    # generates double variable
-    def generateDoubleID(self, isPointer=False):
+    # --- Real type variables ----------------------------------------------
+    
+    # generates real variable
+    def generateRealID(self, isPointer=False):
+    #def generateDoubleID(self, isPointer=False):
         name = self.genID()
+        type = getTypeString()       
         if isPointer == True:
-            self.varNames[name] = "double*"
+            type = type + "*"
             self.pointers.add(name)
-        else:
-            self.varNames[name] = "double"
+        self.varNames[name] = type
         return name
     
-    # generates temporal double variable
-    def generateTempDoubleID(self):
+    # generates temporal real variable
+    def generateTempRealID(self):
         self.tempLastId = self.tempLastId + 1
         name = "tmp_" + str(self.tempLastId)
-        self.tempVarNames[name] = "double"
+        type = getTypeString()
+        self.tempVarNames[name] = type
         return name
+    # ----------------------------------------------------------------------
     
     # generate int variable
     def generateIntID(self):

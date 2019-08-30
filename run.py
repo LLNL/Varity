@@ -5,6 +5,7 @@ import subprocess
 import gen_inputs
 import cfg
 import socket
+from type_checking import isTypeReal, isTypeRealPointer
 
 PROG_PER_TEST = {}
 
@@ -25,11 +26,11 @@ def getInputTypes(fullProgName):
 
 def generateInputs(fullProgName):
     types = getInputTypes(fullProgName)
-    inGen = gen_inputs.InputGenerator()
+    #inGen = gen_inputs.InputGenerator()
     ret = ""
     for t in types:
-        if t == "double" or t == "double*":
-            i = inGen.genInput()
+        if isTypeReal(t) or isTypeRealPointer(t):
+            i = gen_inputs.InputGenerator.genInput()
             ret = ret + i + " "
         elif t == "int":
             ret = ret + "5 "

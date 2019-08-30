@@ -3,6 +3,7 @@ import gen_program
 import random
 import gen_inputs
 from random_functions import lucky, veryLucky
+import type_checking
 
 MathFunctions = [
                  "acos(double)",
@@ -43,7 +44,7 @@ class MathExpression(gen_program.Node):
         for t in types:
             if t == "double":
                 if veryLucky():
-                    self.parameters.append(gen_inputs.InputGenerator().genInput() )
+                    self.parameters.append(gen_inputs.InputGenerator.genInput() )
                 else:
                     self.parameters.append(gen_program.Expression())
             elif t == "int":
