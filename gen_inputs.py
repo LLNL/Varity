@@ -27,6 +27,12 @@ class InputGenerator:
             return FP32Input.genInput()
         return "undefined"
 
+    def getRealType(number):
+        if type_checking.areRealsDouble():
+            return FP64Input.getRealType(number)
+        elif type_checking.areRealsSingle():
+            return FP32Input.getRealType(number)
+
 class FP64Input:
     
     def genInput():
@@ -48,6 +54,19 @@ class FP64Input:
             n = ret
         
         return str(n)
+    
+    def getRealType(number):
+        if str(number) == "-0.0" or str(number) == "+0.0":
+            return FPNumberType.zero
+        exp = int(number.split("E")[1])
+        if exp >= -300 and exp <= 300:
+            return FPNumberType.normal
+        elif exp >= -323 and exp <= -309:
+            return FPNumberType.subnormal
+        elif exp >= 305 and exp <= 307:
+            return FPNumberType.almost_overflow
+        elif exp >= -307 and exp <= -305:
+            return FPNumberType.almost_underflow
     
     def getNormal():
         exponent = random.randrange(-300, 300)
@@ -99,6 +118,19 @@ class FP32Input:
             n = ret
         
         return str(n)
+
+    def getRealType(number):
+        if str(number) == "-0.0f" or str(number) == "+0.0f":
+            return FPNumberType.zero
+        exp = int(number.split("E")[1])
+        if exp >= -30 and exp <= 30:
+            return FPNumberType.normal
+        elif exp >= -44 and exp <= -40:
+            return FPNumberType.subnormal
+        elif exp >= 34 and exp <= 37:
+            return FPNumberType.almost_overflow
+        elif exp >= -37 and exp <= -34:
+            return FPNumberType.almost_underflow
     
     def getNormal():
         exponent = random.randrange(-30, 30)
@@ -131,4 +163,6 @@ class FP32Input:
 
 if __name__ == "__main__":
     print("In main...")
-    print(InputGenerator.genInput())
+    n = InputGenerator.genInput()
+    print(n)
+    print(InputGenerator.getRealType(n))
