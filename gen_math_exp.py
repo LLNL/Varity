@@ -4,6 +4,7 @@ import random
 import gen_inputs
 from random_functions import lucky, veryLucky
 import type_checking
+import cfg
 
 MathFunctions = [
                  "acos(double)",
@@ -34,13 +35,15 @@ class MathExpression(gen_program.Node):
         self.right = right
         self.parameters = []
 
-        i = random.randrange(0, len(MathFunctions))
-        func = MathFunctions[i]
-        #print("Found", func)
+        if cfg.MATH_FUNC_ALLOWED:
+            i = random.randrange(0, len(MathFunctions))
+            func = MathFunctions[i]
+        else:
+            func = " (double)"
+        
         self.code = func.split("(")[0]
         
         types = func[:-1].split("(")[1].split(",")
-        #print("Types:", types)
         for t in types:
             if t == "double":
                 if veryLucky():

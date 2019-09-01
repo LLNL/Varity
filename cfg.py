@@ -2,11 +2,20 @@
 # Program generation options
 ###############################################################################
 
-MAX_EXPRESSION_SIZE = 6
-MAX_NESTING_LEVELS = 4
-MAX_LINES_IN_BLOCK = 3
+#MAX_EXPRESSION_SIZE = 6
+#MAX_NESTING_LEVELS = 4
+#MAX_LINES_IN_BLOCK = 3
+#ARRAY_SIZE = 10
+#MAX_SAME_LEVEL_BLOCKS = 2
+#MATH_FUNC_ALLOWED = True
+
+MAX_EXPRESSION_SIZE = 3
+MAX_NESTING_LEVELS = 2
+MAX_LINES_IN_BLOCK = 1
 ARRAY_SIZE = 10
-MAX_SAME_LEVEL_BLOCKS = 2
+MAX_SAME_LEVEL_BLOCKS = 1
+MATH_FUNC_ALLOWED = True
+
 
 ###############################################################################
 # Compilation options
