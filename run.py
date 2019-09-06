@@ -6,6 +6,7 @@ import gen_inputs
 import cfg
 import socket
 from type_checking import isTypeReal, isTypeRealPointer
+import multiprocessing as mp
 
 PROG_PER_TEST = {}
 
@@ -48,8 +49,54 @@ def getAllTests(fullProgName):
     allTests = glob.glob(fullProgName+"*.exe")
     PROG_PER_TEST[fullProgName] = allTests
 
+'''
+def spawnProc(config):
+    (cmd, results, lock) = config
+    try:
+        out = subprocess.check_output(cmd, shell=True)
+        res = out.decode('ascii')[:-1]
+        lock.acquire()
+        results.append(cmd + " " + res)
+        lock.release()
+    except subprocess.CalledProcessError as outexc:
+        print("\nError at runtime:", outexc.returncode, outexc.output)
+        print("CMD", cmd)
+        exit()
+
 def runTests():
-    global PROG_PER_TEST
+    global PROG_PER_TEST, PROG_RESULTS
+    print("Total programs: ", len(PROG_PER_TEST.keys()))
+    manager = mp.Manager()
+    lock = manager.Lock()
+    #cpuCount = mp.cpu_count()
+    cpuCount = 16
+    c = 1
+    
+    for k in PROG_PER_TEST.keys():
+        fullProgName = k
+        results = manager.list()
+        inputsList = []
+        for n in range(cfg.INPUT_SAMPLES_PER_RUN):
+            inputs = generateInputs(fullProgName)
+            for t in PROG_PER_TEST[k]:
+                cmd = t + " " + inputs
+                config = (cmd, results, lock)
+                inputsList.append(config)
+    
+        for i in range(0, len(inputsList), cpuCount):
+            print("\r--> Running program: {}".format(c), end='')
+            sys.stdout.flush()
+            workLoad = inputsList[i:i+cpuCount]
+            with mp.Pool(cpuCount) as myPool:
+                myPool.map(spawnProc, workLoad)
+
+        PROG_RESULTS[k] = results
+        c = c + 1
+    print("")
+'''
+
+def runTestsSerial():
+    global PROG_PER_TEST, PROG_RESULTS
     print("Total programs: ", len(PROG_PER_TEST.keys()))
     count = 1
     for k in PROG_PER_TEST.keys():
@@ -58,7 +105,7 @@ def runTests():
         sys.stdout.flush()
         count = count + 1
         # ----------------------
-
+        
         fullProgName = k
         results = []
         for n in range(cfg.INPUT_SAMPLES_PER_RUN):
@@ -67,15 +114,15 @@ def runTests():
                 try:
                     cmd = t + " " + inputs
                     #print ("Running: " + cmd)
-                    out = subprocess.check_output(cmd, shell=True) 
+                    out = subprocess.check_output(cmd, shell=True)
                     res = out.decode('ascii')[:-1]
                     #print("got: " + res)
                     results.append(t + " " + inputs + " " + res)
-                except subprocess.CalledProcessError as outexc:                                                                                                   
+                except subprocess.CalledProcessError as outexc:
                     print("\nError at runtime:", outexc.returncode, outexc.output)
                     print("CMD", cmd)
                     exit()
-
+    
         PROG_RESULTS[k] = results
     print("")
 
@@ -136,23 +183,19 @@ def saveResults(rootDir):
     print("}", file=f)
     f.close()
     
-def run(d):
+def run(dir):
     global PROG_PER_TEST
     
-    # Dir to walk
-    #rootDir = sys.argv[1]
-    #rootDir = socket.gethostname()+"-"+str(os.getpid())
-    rootDir = "./"+d    
-
     # Walk on the directory tree
-    for dirName, subdirList, fileList in os.walk(rootDir):
+    for dirName, subdirList, fileList in os.walk(dir):
         for fname in fileList:
             if fname.endswith('.c'):
                 fullPath = dirName+"/"+fname
                 getAllTests(fullPath)
-    runTests()
+    #runTests()
+    runTestsSerial()
     print("Saving runs results...")
-    saveResults(rootDir)
+    saveResults(dir)
     print("done")
 
 if __name__ == "__main__":
