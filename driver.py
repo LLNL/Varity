@@ -38,20 +38,25 @@ def compileCode(config):
     try:
         pwd = os.getcwd()
         os.chdir(dirName)
+        libs = " -lm "
         if isCUDACompiler(compiler_name):
             options = ""
             #if op_level == "-O0":
             #    options = " --fmad=false "
-            cmd = compiler_path + options + " -arch=sm_60 " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName+"u"
+            cmd = compiler_path + options + " -arch=sm_60 " + op_level + libs + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName+"u"
         else:
             options = ""
             #if "xlc" in compiler_name and op_level == "-O0":
             #    options = " -qfloat=nomaf "
             #if "gcc" in compiler_name and op_level == "-O0":
             #    options = " -fma "
-            if "clang" in compiler_name and op_level == "-O0":
-                options = " -ffp-contract=fast "
-            cmd = compiler_path + options + " -std=c99 " + op_level + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
+            #if "clang" in compiler_name and op_level == "-O0":
+            #    options = " -ffp-contract=fast "
+            if "pgcc" in compiler_name:
+                c99 = " -c99 "
+            else:
+                c99 = " -std=c99 "
+            cmd = compiler_path + options + c99 + op_level + libs + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
 
         out = subprocess.check_output(cmd, shell=True)
         os.chdir(pwd)
