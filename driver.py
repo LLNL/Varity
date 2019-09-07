@@ -33,30 +33,45 @@ def writeInputFile(fileName, allTypes):
 def isCUDACompiler(compiler_name):
     return "nvcc" in compiler_name
 
+def getExtraOptimization(compiler_name, e: int):
+    ret = ""
+    if "clang" in compiler_name:
+        if e == 1:
+            ret = "-ffp-contract=off"
+        ret = ret + " -std=c99"
+    elif "gcc" in compiler_name:
+        if e == 1:
+            ret = "-ffp-contract=off"
+        ret = ret + " -std=c99"
+    elif "pgcc" in compiler_name:
+        if e == 1:
+            ret = "-nofma"
+        ret = ret + " -c99"
+    elif "nvcc" in compiler_name:
+        if e == 1:
+            ret = "--fmad=false"
+        ret = ret + " -arch=sm_60"
+    elif "xlc" in compiler_name:
+        if e == 1:
+            ret = "-qfloat=nomaf"
+
+    return ret
+
 def compileCode(config):
-    (compiler_name, compiler_path, op_level, dirName, fileName) = config
+    (compiler_name, compiler_path, op_level, other_op, dirName, fileName) = config
     try:
         pwd = os.getcwd()
         os.chdir(dirName)
         libs = " -lm "
+        more_ops = getExtraOptimization(compiler_name, other_op)
+        extra_name = ""
+        if other_op == 1:
+            extra_name = "_nofma"
+        compilation_arguments = [compiler_path, op_level, more_ops, libs, "-o", fileName+"-"+compiler_name+op_level+extra_name+".exe", fileName]
+        cmd = " ".join(compilation_arguments)
+        #cmd = compiler_path + " " + op_level + " " + more_ops + " " + libs + " -o " + fileName + "-" + compiler_name + op_level + extra_name + ".exe " + fileName
         if isCUDACompiler(compiler_name):
-            options = ""
-            #if op_level == "-O0":
-            #    options = " --fmad=false "
-            cmd = compiler_path + options + " -arch=sm_60 " + op_level + libs + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName+"u"
-        else:
-            options = ""
-            #if "xlc" in compiler_name and op_level == "-O0":
-            #    options = " -qfloat=nomaf "
-            #if "gcc" in compiler_name and op_level == "-O0":
-            #    options = " -fma "
-            #if "clang" in compiler_name and op_level == "-O0":
-            #    options = " -ffp-contract=fast "
-            if "pgcc" in compiler_name:
-                c99 = " -c99 "
-            else:
-                c99 = " -std=c99 "
-            cmd = compiler_path + options + c99 + op_level + libs + " -o " + fileName + "-" + compiler_name + op_level + ".exe " + fileName
+            cmd = cmd+"u"
 
         out = subprocess.check_output(cmd, shell=True)
         os.chdir(pwd)
@@ -102,8 +117,9 @@ def compileTests(path):
             for c in cfg.COMPILERS:
                 compiler_name = c[0]
                 compiler_path = c[1]
-                for op in cfg.OPT_LEVELS:
-                    config = (compiler_name, compiler_path, op, p, fileName)
+                for opts in cfg.OPT_LEVELS:
+                    (op, other_op) = opts
+                    config = (compiler_name, compiler_path, op, other_op, p, fileName)
                     compileConfigList.append(config)
 
     cpuCount = mp.cpu_count()

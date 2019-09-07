@@ -116,7 +116,7 @@ def main():
     print("keys:", len(resultsCombinations.keys()))
 
 
-    optimizations = ["O0", "O1", "O2", "O3"]
+    optimizations = ["O0_nofma","O0", "O1", "O2", "O3"]
     values = ["Real", "Zero", "NaN", "+Inf", "-Inf"]
 
     print("\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}")
