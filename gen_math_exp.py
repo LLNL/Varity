@@ -42,7 +42,9 @@ class MathExpression(gen_program.Node):
             func = " (double)"
         
         self.code = func.split("(")[0]
-        
+        if not type_checking.areRealsDouble():        
+            self.code = self.code + "f"
+ 
         types = func[:-1].split("(")[1].split(",")
         for t in types:
             if t == "double":

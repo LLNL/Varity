@@ -43,7 +43,7 @@ def getExtraOptimization(compiler_name, e: int):
         if e == 1:
             ret = "-ffp-contract=off"
         ret = ret + " -std=c99"
-    elif "pgcc" in compiler_name:
+    elif "pgi" in compiler_name:
         if e == 1:
             ret = "-nofma"
         ret = ret + " -c99"

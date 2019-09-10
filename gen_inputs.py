@@ -111,16 +111,16 @@ class FP32Input:
         elif x == FPNumberType.almost_underflow:
             n = FP32Input.getAlmostUnderflow()
         elif x == FPNumberType.zero:
-            n = "+0.0f"
+            n = "+0.0"
             if lucky():
-                n = "-0.0f"
+                n = "-0.0"
         else:
             n = ret
         
-        return str(n)
+        return str(n+"f")
 
     def getRealType(number):
-        if str(number) == "-0.0f" or str(number) == "+0.0f":
+        if str(number) == "-0.0" or str(number) == "+0.0":
             return FPNumberType.zero
         exp = int(number.split("E")[1])
         if exp >= -30 and exp <= 30:
