@@ -2,6 +2,11 @@ import json
 import sys
 import math
 
+optimizations = ["O0_nofma","O0", "O1", "O2", "O3"]
+#compilers = ["clang", "gcc", "nvcc", "xlc"]
+compilers = ["clang", "gcc", "icc"]
+
+
 # All possible options of outputs:
 #    numerical (non zero; includes subnormals)
 #    zero
@@ -33,6 +38,8 @@ def getCompiler(c: str):
         return "nvcc"
     elif "xlc" in c:
         return "xlc"
+    elif "icc" in c:
+        return "icc"
 
 # Returns the diff of two results
 def difference(x, y):
@@ -127,9 +134,9 @@ def main():
                     if difference(resultC1, resultC2) != 0:
                         diff = diff + 1
                         o = k.split("-")[-1:][0]
-                        #prog = k.split("-")[0]
-                        #if o == 'O0_nofma':
-                        #    print("\t", c1, c2, resultC1, resultC2, o, prog)
+                        prog = k.split("-")[0]
+                        if o == 'O0':
+                            print("\t", c1, c2, resultC1, resultC2, o, prog, k)
                         
                         # ----- Report 1 data -------
                         comb = [getType(resultC1), getType(resultC2), "z"+o]
@@ -159,9 +166,15 @@ def main():
 
     firstReport(resultsCombinations, total)
     secondReport(report2Results, total)
+    #thirdReport(report2Results, total)
+    fourthReport(per_compiler_table)
 
 # % of differences for all compilers and all Optimization levels
 def firstReport(resultsCombinations, total):
+    global optimizations, compilers
+    
+    print("\n *** Report 1 ***\n")
+    
     for k in resultsCombinations:
         print(k, ":", resultsCombinations[k]/total*100.0)
     print("keys:", len(resultsCombinations.keys()))
@@ -236,11 +249,10 @@ def firstReport(resultsCombinations, total):
 
 # Number of digits of difference for {Real, Real} differences
 def secondReport(report2Results, total):
+    global optimizations, compilers
+    
     for k in report2Results:
         print(k, ":", report2Results[k][0]/total*100.0, report2Results[k][1], report2Results[k][2])
-
-    optimizations = ["O0_nofma","O0", "O1", "O2", "O3"]
-    compilers = ["clang", "gcc", "nvcc", "xlc"]
 
     print("\\begin{tabular}{c|c|c|c|c|c|c}")
     print("\hline")
@@ -270,7 +282,7 @@ def secondReport(report2Results, total):
                 sys.stdout.write(per)
                 if x != (len(compilers)-2):
                     sys.stdout.write(" & ")
-        # ------ PRints min, max -------------------
+        # ------ Prints min, max -------------------
         print(" \\\\ ")
         sys.stdout.write(" & ")
         for x in range(len(compilers)-1):
@@ -288,6 +300,149 @@ def secondReport(report2Results, total):
                 if x != (len(compilers)-2):
                     sys.stdout.write(" & ")
         print(" \\\\ \hline")
+    print("\end{tabular}")
+
+def thirdReport(report2Results, total):
+    global optimizations, compilers
+    
+    print("\n *** Report 3 ***\n")
+    
+    for k in report2Results:
+        print(k, ":", report2Results[k][0]/total*100.0, report2Results[k][1], report2Results[k][2])
+
+    data = {}
+    for op in optimizations:
+        for x in range(len(compilers)-1):
+            for y in range(x+1,len(compilers)):
+                if compilers[x] != 'nvcc' and compilers[y] != 'nvcc':
+                    continue
+                comb = [compilers[x], compilers[y], "z"+op]
+                comb.sort()
+                comb = tuple(comb)
+                p = report2Results[comb][0]/total*10000.0
+                print(compilers[x], compilers[y], op, "-->", p)
+                
+                if compilers[x] == 'nvcc':
+                    pairCompiler = compilers[y]
+                else:
+                    pairCompiler = compilers[x]
+                
+                #print("op", op)
+                #data[op][pairCompiler] = p
+                if op in data.keys():
+                    data[op][pairCompiler] = p
+                else:
+                    data[op] = {pairCompiler: p}
+
+    print("\\begin{tabular}{c|c|c|c}")
+    print("\hline")
+    # print header 
+    sys.stdout.write(" & ")
+    line = ""
+    for c in data[optimizations[0]].keys():
+        line = line + c + " & "
+    print(line[:-2] + " \\\\ \hline ")
+
+    # print data
+    for op in data.keys():
+        sys.stdout.write(op+" & ")
+        line = ""
+        for c in data[op]:
+            line = line + '{:1.3f}'.format(data[op][c]) + "\% & "
+        line = line[:-2] + " \\\\ \hline "
+        print(line)
+
+    # print total
+    line = ""
+    for c in ["clang", "gcc", "xlc"]:
+        t = 0
+        for op in data.keys():
+            t = t + float(data[op][c])
+        line = line + '{:1.3f}'.format(t) + "\% & "
+    print("All & " + line[:-2] + " \\\\ \hline ")
+    print("\end{tabular}")
+
+def checkIfThereIsDiffWithNOFMA(op_o0_nofma, op_o0, op_o1, op_o2, op_o3):
+    ret0 = 0; ret1 = 0; ret2 = 0; ret3 = 0
+    if op_o0_nofma != op_o0:
+        ret0 = 1
+    if op_o0_nofma != op_o1:
+        ret1 = 1
+    if op_o0_nofma != op_o2:
+        ret2 = 1
+    if op_o0_nofma != op_o3:
+        ret3 = 1
+    return (ret0, ret1, ret2, ret3)
+
+def fourthReport(per_compiler_table):
+    global optimizations, compilers
+    
+    print("\n *** Report 4 ***\n")
+    
+    totalData = {}
+    total = 0
+    for c in per_compiler_table.keys():
+        op_o0_nofma = ""; op_o0 = ""; op_o1 = ""; op_o2 = ""; op_o3 = ""
+        
+        for k in per_compiler_table[c].keys():
+            op = k.split("-")[-1:][0]
+            val = per_compiler_table[c][k]
+            if op == "O0_nofma":
+                op_o0_nofma = val
+            elif op == "O0":
+                op_o0 = val
+            elif op == "O1":
+                op_o1 = val
+            elif op == "O2":
+                op_o2 = val
+            elif op == "O3":
+                op_o3 = val
+            
+            #print(c, op, per_compiler_table[c][k])
+            if op_o0_nofma!="" and op_o0!="" and op_o1!="" and op_o2!="" and op_o3!="":
+                total = total + 1
+                (ret0, ret1, ret2, ret3) = checkIfThereIsDiffWithNOFMA(op_o0_nofma, op_o0, op_o1, op_o2, op_o3)
+                a = [ret0, ret1, ret2, ret3]
+                #print(ret0, ret1, ret2, ret3)
+                op_o0_nofma = ""; op_o0 = ""; op_o1 = ""; op_o2 = ""; op_o3 = ""
+
+                comp = getCompiler(c)
+                if comp in totalData.keys():
+                    totalData[comp] = [x+y for x,y in zip(totalData[comp],a)]
+                else:
+                    totalData[comp] = a
+
+
+    for op in range(4):
+        for c in totalData.keys():
+            #per = totalData[c][op]/float(total)*10000.0
+            #line.append('{:1.3f}'.format(per))
+            print(c, "-->", totalData[c])
+    print("total--->", total)
+    
+    print("\\begin{tabular}{c|c|c|c|c}")
+    print("\hline")
+    line = ""
+    for c in sorted(totalData.keys()):
+        line = line + c + " & "
+    print(" & " + line[:-2] + " \\\\ \hline ")
+
+    totalPer = {}
+    for op in range(4):
+        line = []
+        for c in sorted(totalData.keys()):
+            per = totalData[c][op]/float(total)*1000.0
+            line.append('{:1.3f}'.format(per)+"\%")
+            if c in totalPer.keys():
+                totalPer[c] = totalPer[c] + per
+            else:
+                totalPer[c] = per
+        print("O"+str(op)+" & " + " & ".join(line) + " \\\\ \hline ")
+
+    line = []
+    for c in sorted(totalPer.keys()):
+        line.append('{:1.3f}'.format(totalPer[c])+"\%")
+    print("All & " + " & ".join(line) + " \\\\ \hline ")
     print("\end{tabular}")
 
 if __name__ == '__main__':
