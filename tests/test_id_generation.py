@@ -8,7 +8,8 @@ import cfg
 import random
 
 def test_generate_real():
-    ig = id_generator.IdGenerator()
+    ig = id_generator.IdGenerator.get()
+    ig.clear()
     variables = set([])
     for i in range(3):
         variables.add( ig.generateRealID())
