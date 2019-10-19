@@ -137,8 +137,11 @@ def compileTests(path):
 
     print("")
 
+def dirName():
+    return socket.gethostname()+"_"+str(os.getpid())
+
 def getTargetDirectory():
-    p = socket.gethostname()+"_"+str(os.getpid())
+    p = dirName()
     print("Creating dir:", p)
     try:
         os.mkdir(p)
