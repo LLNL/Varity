@@ -1,12 +1,13 @@
 
+import gen_inputs
+import id_generator
+import gen_inputs
+import cfg
+
 from enum import Enum
 import random
-import gen_inputs
 import subprocess
-import gen_inputs
-#import gen_math_exp
-import id_generator
-import cfg
+
 from random_functions import lucky, veryLucky
 from type_checking import getTypeString, isTypeReal, isTypeRealPointer, isTypeInt
 

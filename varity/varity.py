@@ -1,11 +1,16 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'common')))
+
+# Varity modules
 import gen_program
 import cfg
 import run
-import os
-import subprocess
-import sys
-import socket
 import type_checking
+
+# Python modules
+import subprocess
+import socket
 import multiprocessing as mp
 import argparse
 

@@ -1,8 +1,12 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import type_checking
+from random_functions import lucky, veryLucky
 
 from enum import Enum
 import random
-from random_functions import lucky, veryLucky
-import type_checking
 
 class FPNumberType(Enum):
     normal = 0
@@ -120,6 +124,7 @@ class FP32Input:
         return str(n+"f")
 
     def getRealType(number):
+        number = number[:-1] # remove f
         if str(number) == "-0.0" or str(number) == "+0.0":
             return FPNumberType.zero
         exp = int(number.split("E")[1])
