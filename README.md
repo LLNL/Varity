@@ -4,7 +4,7 @@
  
  ## Sample Tests
  
- A random floating-point test in Varity look like the following code:
+ A random floating-point test in Varity looks like the following code:
 
  ```c
 void compute(double comp, double var_1, double var_2, double var_3, int var_4,
@@ -32,7 +32,7 @@ void compute(double comp, double var_1, double var_2, double var_3, int var_4,
  # Getting Started
  
  ## Requirements
- You need C compilers, such as clang or gcc, or any other compiler that you want to test in the system. Other compilers we have tested successfully are PGI, NVIDIA nvcc, and the Intel compiler. You also need Python 3. There are no other dependencies.
+ You will need C compilers, such as clang or gcc, or any other C compiler that you want to test in the system. Other compilers we have tested successfully are PGI, NVIDIA nvcc, and the Intel compiler. You will also need Python 3. There are no other dependencies.
  
  ## Using Varity
  
@@ -64,9 +64,9 @@ void compute(double comp, double var_1, double var_2, double var_3, int var_4,
  Saving runs results...
  done
  ```
- Varity creates a directory named `mylaptop_22359` to store the results. The name of the directory is created by joining the hostname, "_", and the process ID of the run. Inside this directory, you will find a file named `results.json` with the results.
+ In this case, Varity created a directory named `mylaptop_22359` to store the results. The name of the directory is created by joining the hostname, "_", and the process ID of the run. Inside this directory, you will find a file named `results.json` with the results.
  
- Alternatively, instead of executing the previous three steps inmediately (i.e., test generation, copmilation, and execution), you can perform these steps separataley using the -g, -c, and -r options; you can see the options by running `python3 varity.py -h`:
+ Alternatively, instead of executing the previous three steps inmediately (i.e., test generation, copmilation, and execution), you can perform these steps separataley using the -g, -c, and -r options; you can see the script options by running `python3 varity.py -h`:
  
  ```sh
  $ python3 varity.py -h
