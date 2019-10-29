@@ -1,6 +1,40 @@
  # Varity
  
- **Varity** is a framework to identify variations in floating-point programs through randomized differential testing. Varity generates random tests that include floating-point operations and compile these tests with multiple different compilers in a system. It also generates random floating-point inputs for the tests. When tests are executed, the results are compared to identify variations in the results. Varity helps users of a system to identify the compilers that produce the most similar results in the system.
+ **Varity** is a framework to identify variations in floating-point programs through randomized differential testing. Varity generates random tests that include floating-point operations and compile these tests with different compilers in a system. It also generates random floating-point inputs for the tests. When tests are executed, the results are compared to identify variations in the results. Varity helps users of a system to identify the compilers that produce the most similar results in the system.
+ 
+ ## Sample Tests
+ 
+ A random floating-point test in Varity look like the following code:
+
+ ```c
+void compute(double comp, int var_1, int var_2, double var_3, double var_4,
+             double var_5, double var_6, double var_7, double var_8,
+             double var_9, double var_10, double var_11, double var_12,
+             double var_13, double var_14, double var_15, double var_16,
+             double var_17) {
+  if (comp ==
+      (var_3 - (-1.7553E-306 * log10(-1.2626E-322 + (var_4 + +1.5883E-307))))) {
+    for (int i = 0; i < var_1; ++i) {
+      double tmp_1 = -1.6695E-321;
+      comp = tmp_1 / asin((var_5 - var_6));
+      for (int i = 0; i < var_2; ++i) {
+        comp += var_7 -
+                atan2((+1.3376E305 - floor(+0.0 - (var_8 * var_9 * var_10))),
+                      var_11 / var_12 * var_13);
+        comp = (-1.2466E-307 * +0.0);
+      }
+      if (comp == sinh((var_14 / var_15 / -1.5078E70))) {
+        comp += +1.3745E-312 / (var_16 / var_17);
+      }
+    }
+  }
+  printf("%.17g\n", comp);
+}
+```
+ 
+ A `compute` function is generated, which takes as arguments floating-point or integer variables. The function body
+ can contain arithmetic expressions, for loops, conditions, math function calls, and the use of temporal variables.
+ The function computes a `comp` variables and the value stored in this variable is printed at the end of the test function.
  
  # Getting Started
  
