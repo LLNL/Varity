@@ -7,24 +7,17 @@
  A random floating-point test in Varity look like the following code:
 
  ```c
-void compute(double comp, int var_1, int var_2, double var_3, double var_4,
+void compute(double comp, double var_1, double var_2, double var_3, int var_4,
              double var_5, double var_6, double var_7, double var_8,
-             double var_9, double var_10, double var_11, double var_12,
-             double var_13, double var_14, double var_15, double var_16,
-             double var_17) {
-  if (comp ==
-      (var_3 - (-1.7553E-306 * log10(-1.2626E-322 + (var_4 + +1.5883E-307))))) {
-    for (int i = 0; i < var_1; ++i) {
-      double tmp_1 = -1.6695E-321;
-      comp = tmp_1 / asin((var_5 - var_6));
-      for (int i = 0; i < var_2; ++i) {
-        comp += var_7 -
-                atan2((+1.3376E305 - floor(+0.0 - (var_8 * var_9 * var_10))),
-                      var_11 / var_12 * var_13);
-        comp = (-1.2466E-307 * +0.0);
-      }
-      if (comp == sinh((var_14 / var_15 / -1.5078E70))) {
-        comp += +1.3745E-312 / (var_16 / var_17);
+             double var_9, double var_10, double var_11) {
+  if (comp <= -1.8713E305 + cos(-1.8213E-314 + -1.2746E306 * (var_1 * +0.0))) {
+    if (comp < var_2 + (+1.9467E212 - -1.5888E-306 - (var_3 / +1.4018E-312))) {
+      comp += atan((+1.4283E-306 * log10((+1.0403E-318 / var_5))));
+      comp += +1.1409E305 / var_6 *
+              (var_7 + sinh((var_8 + +1.8913E306 / (var_9 / -1.0257E-211))));
+      for (int i = 0; i < var_4; ++i) {
+        comp += (var_10 - var_11 * asin(-1.7743E-310));
+        comp += (-1.7207E-199 / (-1.8883E-306 + -1.6191E-318));
       }
     }
   }
