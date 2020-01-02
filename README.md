@@ -127,6 +127,10 @@ void compute(double comp, double var_1, double var_2, double var_3, int var_4,
  For questions, contact Ignacio Laguna <ilaguna@llnl.gov>.
  
  ## License
+
+Varity is distributed under the terms of the MIT license. All new contributions must be made under the MIT license.
  
- ...
+ See LICENSE and NOTICE for details.
+ 
+ LLNL-CODE-798680
 
