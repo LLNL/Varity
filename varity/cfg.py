@@ -44,5 +44,5 @@ INPUT_SAMPLES_PER_RUN = 5
 # Flaoting-point types
 ###############################################################################
 
-#REAL_TYPE = "double"
-REAL_TYPE = "float"
+REAL_TYPE = "double"
+#REAL_TYPE = "float"

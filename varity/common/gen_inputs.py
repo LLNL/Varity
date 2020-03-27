@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import type_checking
@@ -14,6 +15,13 @@ class FPNumberType(Enum):
     almost_overflow = 2
     almost_underflow = 3
     zero = 4
+    
+# Defines classes of FP numerical numbers
+class NumericalType(Enum):
+    very_small = 0
+    small = 1
+    large = 2
+    very_large = 3
 
 # This class gererates random floating-point inputs.
 # It considers several cases:
@@ -38,7 +46,34 @@ class InputGenerator:
             return FP32Input.getRealType(number)
 
 class FP64Input:
+
+    # ---- Get Specific Classes of Numbers -----
+    def getNormalSmall():
+        exponent = random.randrange(-306, 1)
+        return FP64Input.writeNumber(exponent)
     
+    def getNormalLarge():
+        exponent = random.randrange(1, 155) # +308/2 = 154
+        return FP64Input.writeNumber(exponent)
+    
+    def getNormalVeryLarge():
+        exponent = random.randrange(155, 306)
+        return FP64Input.writeNumber(exponent)
+        
+    def getAnyNumericalValue():
+        x = random.choice(list(NumericalType))
+        if x == NumericalType.very_small:
+            return FP64Input.getSubnormal()
+        if x == NumericalType.small:
+            return FP64Input.getNormalSmall()
+        if x == NumericalType.large:
+            return FP64Input.getNormalLarge()
+        if x == NumericalType.very_large:
+            return FP64Input.getNormalVeryLarge()
+        # otherwise
+        return 0.0
+
+    # ---- Get Random Numbers -----
     def genInput():
         ret = "0.0";
         x = random.choice(list(FPNumberType))
@@ -167,7 +202,51 @@ class FP32Input:
             return "+";
 
 if __name__ == "__main__":
-    print("In main...")
-    n = InputGenerator.genInput()
-    print(n)
-    print(InputGenerator.getRealType(n))
+    parser = argparse.ArgumentParser(description='Generate floating-point numbers.')
+
+    parser.add_argument('-n', '--num', dest='N', action='store',
+                        help='print list of N numbers (default: 1 number)')
+                        
+    parser.add_argument('-s', '--sort', dest='s', action='store_true',
+                        help='sort numbers (default: True)')
+    
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--any', dest='t', action='store_const', const=1, help='any number')
+    group.add_argument('--very_small', dest='t', action='store_const', const=2, help='very small numbers')
+    group.add_argument('--small', dest='t', action='store_const', const=3, help='small numbers')
+    group.add_argument('--large', dest='t', action='store_const', const=4, help='large numbers')
+    group.add_argument('--very_large', dest='t', action='store_const', const=5, help='very large numbers')
+    
+    args = parser.parse_args()
+    
+    num = 1
+    if (args.N != None):
+        num = int(args.N)
+    if (args.t == None):
+        args.t = 1
+        
+    l = []
+    for i in range(num):
+        if args.t == 1:
+            l.append(FP64Input.getAnyNumericalValue())
+        elif args.t == 2:
+            l.append(FP64Input.getSubnormal())
+        elif args.t == 3:
+            l.append(FP64Input.getNormalSmall())
+        elif args.t == 4:
+            l.append(FP64Input.getNormalLarge())
+        elif args.t == 5:
+            l.append(FP64Input.getNormalVeryLarge())
+    
+    if (args.s):
+        l.sort(key = float)
+    print(" ".join(l))
+
+    #print("In main...")
+    #n = InputGenerator.genInput()
+    #print(n)
+    #print(InputGenerator.getRealType(n))
+    #print("very small normal", FP64Input.getSubnormal())
+    #print("small normal", FP64Input.getNormalSmall())
+    #print("large normal", FP64Input.getNormalLarge())
+    #print("very large normal", FP64Input.getNormalVeryLarge())
