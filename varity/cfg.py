@@ -8,6 +8,7 @@ MAX_LINES_IN_BLOCK = 3
 ARRAY_SIZE = 10
 MAX_SAME_LEVEL_BLOCKS = 2
 MATH_FUNC_ALLOWED = True
+MATH_FUNC_PROBABILITY = 0.05 
 
 ###############################################################################
 # Compilation options
@@ -15,10 +16,10 @@ MATH_FUNC_ALLOWED = True
 
 # Number of directories per experiment.
 # Each directory is a group.
-NUM_GROUPS = 5
+NUM_GROUPS = 2
 
 # Number of tests per group
-TESTS_PER_GROUP = 3
+TESTS_PER_GROUP = 10
 
 # Set of commpilers to test.
 # COMPILERS is a list containing tuples (x, y), 

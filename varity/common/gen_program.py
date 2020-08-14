@@ -8,7 +8,7 @@ from enum import Enum
 import random
 import subprocess
 
-from random_functions import lucky, veryLucky
+from random_functions import lucky, veryLucky, generateMathExpression
 from type_checking import getTypeString, isTypeReal, isTypeRealPointer, isTypeInt
 
 # Basic node in a tree
@@ -69,7 +69,7 @@ class Expression(Node):
         lastOp = None
         mathExpTerminator = None
         while (size >= 1):
-            if veryLucky():
+            if generateMathExpression():
                 op = gen_math_exp.MathExpression()
                 mathExpTerminator = True
             else:
