@@ -1,0 +1,38 @@
+
+/* This is a automatically generated test. Do not modify */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+__global__
+void compute(float comp, int var_1,int var_2,float var_3) {
+for (int i=0; i < var_1; ++i) {
+  for (int i=0; i < var_2; ++i) {
+    comp += (var_3 * -0.0f);
+}
+}
+   printf("%.17g\n", comp);
+
+}
+
+float* initPointer(float v) {
+  float *ret = (float*) malloc(sizeof(float)*10);
+  for(int i=0; i < 10; ++i)
+    ret[i] = v;
+  return ret;
+}
+
+int main(int argc, char** argv) {
+/* Program variables */
+
+  float tmp_1 = atof(argv[1]);
+  int tmp_2 = atoi(argv[2]);
+  int tmp_3 = atoi(argv[3]);
+  float tmp_4 = atof(argv[4]);
+
+  compute<<<1,1>>>(tmp_1,tmp_2,tmp_3,tmp_4);
+  cudaDeviceSynchronize();
+
+  return 0;
+}

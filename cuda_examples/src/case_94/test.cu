@@ -1,0 +1,40 @@
+
+/* This is a automatically generated test. Do not modify */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+__global__
+void compute(float comp, float var_1,float var_2,float var_3,float var_4) {
+if (comp < -1.0879E36f - (-1.5923E-37f * ceilf(+1.6651E-36f))) {
+  float tmp_1 = -1.0004E16f;
+comp = tmp_1 / (+0.0f + var_1);
+comp += var_2 / (var_3 / var_4);
+comp += ldexpf(+1.3259E-37f + +1.3954E-42f, 2);
+}
+   printf("%.17g\n", comp);
+
+}
+
+float* initPointer(float v) {
+  float *ret = (float*) malloc(sizeof(float)*10);
+  for(int i=0; i < 10; ++i)
+    ret[i] = v;
+  return ret;
+}
+
+int main(int argc, char** argv) {
+/* Program variables */
+
+  float tmp_1 = atof(argv[1]);
+  float tmp_2 = atof(argv[2]);
+  float tmp_3 = atof(argv[3]);
+  float tmp_4 = atof(argv[4]);
+  float tmp_5 = atof(argv[5]);
+
+  compute<<<1,1>>>(tmp_1,tmp_2,tmp_3,tmp_4,tmp_5);
+  cudaDeviceSynchronize();
+
+  return 0;
+}
