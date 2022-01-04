@@ -1,4 +1,4 @@
-## CUDA Examples
+# CUDA Examples
 
 This directory contains examples of Varity tests that produce numerical inconsistencies in CUDA programs. All examples are in the `src` directory.
 
