@@ -422,7 +422,13 @@ class Program():
         ret = ret + "("+getTypeString()+"*) malloc(sizeof("+getTypeString()+")*"+ str(cfg.ARRAY_SIZE) +");\n"
         ret = ret + "  for(int i=0; i < "+ str(cfg.ARRAY_SIZE) +"; ++i)\n"
         ret = ret + "    ret[i] = v;\n"
-        ret = ret + "  return ret;\n"
+        if self.device != True:
+          ret = ret + "  return ret;\n"
+        else:
+          ret = ret + "  "+getTypeString()+" *dev_buff;\n"
+          ret = ret + "  cudaMalloc(&dev_buff, "+str(cfg.ARRAY_SIZE) + ");\n"
+          ret = ret + "  cudaMemcpy(dev_buff, ret, "+str(cfg.ARRAY_SIZE)+ ", cudaMemcpyHostToDevice);\n"
+          ret = ret + "  return dev_buff;\n"
         ret = ret + "}"
         return ret
 
