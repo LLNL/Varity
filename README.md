@@ -129,8 +129,9 @@ void compute(double comp, double var_1, double var_2, double var_3, int var_4,
  ## Cite
  To cite this work, please use:
  ```
- Laguna, Ignacio. "Varity: Quantifying floating-point variations in hpc systems through randomized testing." 
- In 2020 IEEE International Parallel and Distributed Processing Symposium (IPDPS), pp. 622-633. IEEE, 2020.
+ Laguna, Ignacio. "Varity: Quantifying Floating-point Variations in HPC Systems 
+ Through Randomized Testing." In 2020 IEEE International Parallel and Distributed 
+ Processing Symposium (IPDPS), pp. 622-633. IEEE, 2020.
  ```
  
  ## License
