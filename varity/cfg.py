@@ -19,7 +19,7 @@ CUDA_PROG = False
 
 # Number of directories per experiment.
 # Each directory is a group.
-NUM_GROUPS = 2
+NUM_GROUPS = 10
 
 # Number of tests per group
 TESTS_PER_GROUP = 10
