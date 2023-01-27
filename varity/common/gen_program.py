@@ -404,10 +404,27 @@ class FunctionCall(Node):
             h = h + ", "
         h = h + ",".join(id_generator.IdGenerator.get().printAllVars())
         h = h + ") {\n"
+        if cfg.USE_TIMERS:
+            h = h + self.writeTimeBegin()
         return h
 
     def writePrintStatement(self):
-        return '\n   printf("%.17g\\n", comp);\n'
+        ret = ""
+        if cfg.USE_TIMERS:
+            ret += '\n   printf("%.17g ", comp);\n'
+            ret += self.writeTimeEnd()
+        else:
+            ret = '\n   printf("%.17g\\n", comp);\n'
+        return ret
+        #return '\n   printf("%.17g\\n", comp);\n'
+    
+    def writeTimeBegin(self):
+        return '   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();\n'
+    
+    def writeTimeEnd(self):
+        ret = '   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();\n'
+        ret += '   std::cout << "time:" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;\n'
+        return ret
         
     def printCode(self) -> str:
         if self.codeCache != None:
@@ -468,7 +485,11 @@ class Program():
         h = "\n/* This is a automatically generated test. Do not modify */\n\n"
         h = h + "#include <stdio.h>\n"
         h = h + "#include <stdlib.h>\n"
+        if cfg.USE_TIMERS:
+            h = h + "#include <iostream>\n"
+            h = h + "#include <chrono>\n"
         h = h + "#include <math.h>\n\n"
+        
         if self.device == True:
             h = h + "__global__\n"
         h = h + self.func.printCode()

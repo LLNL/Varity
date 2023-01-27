@@ -142,8 +142,18 @@ def saveResults(rootDir):
         for r in PROG_RESULTS[k]:
             compiler = r.split()[0].split('-')[1]
             opt = r.split()[0].split('-')[2].split('.')[0]
-            input = ",".join(r.split()[1:-1])
-            output = r.split()[-1:][0]
+            # Check if timers were used
+            timerUsed = False
+            if 'time:' in r.split()[-1:][0]:
+                timerUsed = True
+                
+            if timerUsed:
+                input = ",".join(r.split()[1:-2])
+                output = " ".join(r.split()[-2:])
+                #time = r.split()[-1:][0]
+            else:
+                input = ",".join(r.split()[1:-1])
+                output = r.split()[-1:][0]
 
             if input in key_input.keys():
                 key_comp = key_input[input]

@@ -41,6 +41,9 @@ TESTS_DIR = "_tests"
 # OpenMP generation
 PARALLEL_PROG = True
 
+# Use timers to gather ellapsed time
+USE_TIMERS = True
+
 ###############################################################################
 # Running options
 ###############################################################################
