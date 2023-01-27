@@ -22,7 +22,7 @@ CUDA_PROG = False
 NUM_GROUPS = 10
 
 # Number of tests per group
-TESTS_PER_GROUP = 10
+TESTS_PER_GROUP = 50
 
 # Set of commpilers to test.
 # COMPILERS is a list containing tuples (x, y), 
@@ -50,7 +50,7 @@ USE_TIMERS = True
 ###############################################################################
 
 # Number of random inputs per run
-INPUT_SAMPLES_PER_RUN = 5
+INPUT_SAMPLES_PER_RUN = 1
 
 ###############################################################################
 # Flaoting-point types
