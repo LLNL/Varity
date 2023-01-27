@@ -28,7 +28,8 @@ TESTS_PER_GROUP = 10
 # COMPILERS is a list containing tuples (x, y), 
 # where x is a string with the compiler name, and y is the path to the compiler
 #COMPILERS = [("clang_80", "/usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang"), ("gcc_721", "/usr/tce/packages/gcc/gcc-7.2.1-redhat/bin/gcc"), ("xlc", "/usr/tce/packages/xl/xl-2019.02.07/bin/xlc"), ("nvcc_92", "/usr/tce/packages/cuda/cuda-9.2.148/bin/nvcc")]
-COMPILERS = [("clang_12", "/Users/lagunaperalt1/projects/bin/clang++")]
+#COMPILERS = [("clang_12", "/Users/lagunaperalt1/projects/bin/clang++")]
+COMPILERS = [("clang_12", "/usr/tce/packages/clang/clang-ibm-12.0.1/bin/clang++"), ("gcc_8", "/usr/tce/packages/gcc/gcc-8.3.1/bin/g++"), ("xlc_16", "/usr/tce/packages/xl/xl-2022.08.19/bin/xlc++")]
 
 # Levels of optimization to try
 #OPT_LEVELS = [("-O0", 1), ("-O0", 0), ("-O1", 0), ("-O2", 0), ("-O3", 0)]

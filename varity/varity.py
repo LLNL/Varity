@@ -41,11 +41,11 @@ def isCUDACompiler(compiler_name):
 
 def getExtraOptimization(compiler_name, e: int):
     ret = ""
-    if "clang" in compiler_name:
+    if "clang++" in compiler_name:
         if e == 1:
             ret = "-ffp-contract=off"
         #ret = ret + " -std=c99"
-    elif "gcc" in compiler_name:
+    elif "g++" in compiler_name:
         if e == 1:
             ret = "-ffp-contract=off"
         #ret = ret + " -std=c99"
@@ -60,7 +60,8 @@ def getExtraOptimization(compiler_name, e: int):
     elif "xlc" in compiler_name:
         if e == 1:
             ret = "-qfloat=nomaf"
-            
+        ret += " -std=c++11"    
+        
     if cfg.PARALLEL_PROG:
         ret += " -fopenmp"
 
