@@ -11,6 +11,11 @@ import subprocess
 from random_functions import lucky, veryLucky, generateMathExpression
 from type_checking import getTypeString, isTypeReal, isTypeRealPointer, isTypeInt
 
+# ================= Global State ===================
+parallel_region_generated = False
+calledNodes = [] # stack of nodes created (ordered)
+# ==================================================
+
 # Basic node in a tree
 class Node:
     def __init__(self, code, left=None, right=None):
@@ -53,11 +58,12 @@ class BinaryOperation(Node):
 
 class Expression(Node):
     rootNode = None
-    def __init__(self, code="=", left=None, right=None, varToBeUsed=None):
+    def __init__(self, code="=", left=None, right=None, varToBeUsed=None, parallel=True):
         import gen_math_exp
         self.left  = left
         self.right = right
         self.varToBeUsed = varToBeUsed
+        self.parallel = parallel
         
         if lucky():
             self.code = code
@@ -106,6 +112,7 @@ class Expression(Node):
         return ret
 
     def printCode(self, assignment=True) -> str:
+        calledNodes.append("Expression")
         t = Expression.total(self, self.rootNode)
         if self.varToBeUsed != None:
             for v in self.varToBeUsed:
@@ -114,16 +121,20 @@ class Expression(Node):
                 t = v + op.printCode() + t
         
         if assignment == True:
-            return "comp " + self.code + " " + t + ";"
+            p = ""
+            if self.parallel:
+                p = "#pragma omp critical\n"
+            return p + "comp " + self.code + " " + t + ";"
         else:
             return t
 
 
 class VariableDefinition(Node):
-    def __init__(self, code=" = ", left=None, right=None, isPointer=False):
+    def __init__(self, code=" = ", left=None, right=None, isPointer=False, parallel=True):
         self.code = code
         self.right = right
         self.isPointer = isPointer
+        self.parallel = parallel
         
         if isPointer == True:
             self.left  = id_generator.IdGenerator.get().generateRealID(True) + "[i]"
@@ -142,15 +153,21 @@ class VariableDefinition(Node):
             return self.left
    
     def printCode(self) -> str:
+        calledNodes.append("VariableDefinition")
         if isinstance(self.right, str):
             c = self.right
         else:
             c = self.right.printCode(False)
-        return self.left + self.code + c + ";"
+        
+        p = ""
+        if self.parallel and self.isPointer:
+            p = "#pragma omp critical\n"
+            
+        return p + self.left + self.code + c + ";"
 
 # A non-recursive block has only expressions (it does not have if-blocks or loop-blocks)
 class OperationsBlock(Node):
-    def __init__(self, code="", left=None, right=None, inLoop=False, recursive=True):
+    def __init__(self, code="", left=None, right=None, inLoop=False, recursive=True, parallel=False):
         self.code = code
         self.left  = left
         self.right = right
@@ -164,7 +181,7 @@ class OperationsBlock(Node):
         # an assigment from an expression:
         #    comp = ...
         if lines == 1:
-            self.left = [Expression()]
+            self.left = [Expression(parallel=parallel)]
         else:
             i = 1
             varsToBeUsed = []
@@ -174,18 +191,18 @@ class OperationsBlock(Node):
                 if lucky() or i==lines: # expression with assigment
                     c = None
                     if len(varsToBeUsed) > 0:
-                        c = Expression("=", None, None, varsToBeUsed[:])
+                        c = Expression("=", None, None, varsToBeUsed[:],parallel)
                         varsToBeUsed.clear()
                     else:
-                        c = Expression()
+                        c = Expression(parallel=parallel)
                     l.append(c)
                     if i==lines:
                         break
                 else:
                     if inLoop==True and lucky():
-                        v = VariableDefinition(isPointer=True)
+                        v = VariableDefinition(isPointer=True, parallel=parallel)
                     else:
-                        v = VariableDefinition()
+                        v = VariableDefinition(parallel=parallel)
                     l.append(v)
                     varsToBeUsed.append(v.getVarName())
                 i = i+1
@@ -197,12 +214,13 @@ class OperationsBlock(Node):
             #nBlocks = 2
             for k in range(nBlocks):
                 if lucky():
-                    b = IfConditionBlock(recursive=False)
+                    b = IfConditionBlock(recursive=False, parallel=parallel)
                 else:
                     b = ForLoopBlock(recursive=False)
                 self.left.append(b)
                     
     def printCode(self) -> str:
+        calledNodes.append("OperationsBlock")
         ret = []
         for l in self.left:
             ret.append( l.printCode() )
@@ -245,11 +263,12 @@ class FoorLoopCondition(Node):
         return self.code
     
 class IfConditionBlock(Node):
-    def __init__(self, level=1, code=None, left=None, right=None, recursive=True):
+    def __init__(self, level=1, code=None, left=None, right=None, recursive=True, parallel=False):
         self.level = level
         self.identation = ''
         self.identation += '  ' * self.level
         self.rec = recursive
+        self.parallel = parallel
         
         # Generate code of the boolean expresion (default)
         self.code = BooleanExpression()
@@ -259,9 +278,10 @@ class IfConditionBlock(Node):
         self.right = "break;"
 
     def printCode(self) -> str:
+        calledNodes.append("IfConditionBlock")
         t = "if (" + self.code.printCode() + ") {\n"
         if self.left == None:
-            self.left = OperationsBlock(recursive=self.rec)
+            self.left = OperationsBlock(recursive=self.rec, parallel=self.parallel)
         t = t + self.identation + self.left.printCode() + "\n"
         t = t + "}"
         return t
@@ -275,17 +295,34 @@ class ForLoopBlock(Node):
         self.identation = ''
         self.identation += '  ' * self.level
         self.rec = recursive
+        
+        self.parallel = False
+        if (cfg.PARALLEL_PROG):
+            self.parallel = True
 
         # Generate code of the loop condition
         self.code = FoorLoopCondition()
         #self.left = OperationsBlock()
         self.left = left
         self.right = None
+        
+        # Make left code parallel
+        if self.parallel and left != None:
+            self.left.parallel = True
 
     def printCode(self) -> str:
-        t = "for (" + self.code.printCode() + ") {\n"
+        calledNodes.append("ForLoopBlock")
+        global parallel_region_generated
+        
+        # Add OpenMP parallel region pragma for the loop
+        t = ""
+        if (self.parallel and not parallel_region_generated):
+            t += "#pragma omp parallel default(shared)\n"
+            parallel_region_generated = True
+            
+        t += "for (" + self.code.printCode() + ") {\n"
         if self.left == None:
-            self.left = OperationsBlock(inLoop=True, recursive=self.rec)
+            self.left = OperationsBlock(inLoop=True, recursive=self.rec, parallel=self.parallel)
         t = t + self.identation + self.left.printCode() + "\n"
         t = t + "}"
         return t
@@ -348,6 +385,7 @@ class FunctionCall(Node):
                               
             elif b == CodeBlock.for_loop:
                 c = ForLoopBlock(i+1)
+                
                 if lastBlock != None:
                     lastBlock.setContent(c)
                 lastBlock = c
@@ -515,9 +553,11 @@ if __name__ == "__main__":
     print(p.printCode()[0])
     #print(p.printCode(True)[0])
     
+    print(calledNodes)
+    
     # Compile and run program 
-    p.compileProgram()
-    p.runProgram()
+    #p.compileProgram()
+    #p.runProgram()
 
     #o = OperationsBlock(inLoop=True)
     #print(o.printCode())

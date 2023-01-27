@@ -189,7 +189,7 @@ def run(dir):
     # Walk on the directory tree
     for dirName, subdirList, fileList in os.walk(dir):
         for fname in fileList:
-            if fname.endswith('.c'):
+            if fname.endswith('.cpp'):
                 fullPath = dirName+"/"+fname
                 getAllTests(fullPath)
     #runTests()
