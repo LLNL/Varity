@@ -40,7 +40,8 @@ OPT_LEVELS = [("-O1", 0), ("-O2", 0), ("-O3", 0)]
 TESTS_DIR = "_tests"
 
 # OpenMP generation
-PARALLEL_PROG = True
+#PARALLEL_PROG = True
+PARALLEL_PROG = False
 
 # Use timers to gather ellapsed time
 USE_TIMERS = True

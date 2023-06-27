@@ -28,6 +28,12 @@ def loadData(fileName):
             if 'gcc' in compiler: gcc_results.append(time)
             if 'xlc' in compiler: xlc_results.append(time)
   
+  ### Check for anomalies ###
+  for i in range(len(clang_results)):
+    if (gcc_results[i] > clang_results[i] and gcc_results[i] > xlc_results[i]):
+        print(i,':','gcc',gcc_results[i],'clang',clang_results[i],'xlc',xlc_results[i])
+  
+  ### Plot Results ###
   x = list(range(1, len(clang_results)+1))
   fig, ax = plt.subplots()
   #ax.plot(x, clang_results, linestyle='.');

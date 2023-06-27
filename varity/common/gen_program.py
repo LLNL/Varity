@@ -128,7 +128,6 @@ class Expression(Node):
         else:
             return t
 
-
 class VariableDefinition(Node):
     def __init__(self, code=" = ", left=None, right=None, isPointer=False, parallel=True):
         self.code = code
@@ -568,13 +567,13 @@ class Program():
         return input
 
 if __name__ == "__main__":
-    #for i in range(3):
-    p = Program()
+
+    #p = Program()
     #(c, allTypes) = p.printCode(True)
-    print(p.printCode()[0])
+    #print(p.printCode()[0])
     #print(p.printCode(True)[0])
     
-    print(calledNodes)
+    #print(calledNodes)
     
     # Compile and run program 
     #p.compileProgram()
@@ -582,6 +581,14 @@ if __name__ == "__main__":
 
     #o = OperationsBlock(inLoop=True)
     #print(o.printCode())
+    
+    # ---- Class Testing ----
+    fb = ForLoopBlock()
+    print(fb.printCode())
+    #ep = Expression()
+    #print(ep.printCode())
+    print(calledNodes)
+    
 
     
 
