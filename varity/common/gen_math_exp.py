@@ -34,6 +34,7 @@ class MathExpression(gen_program.Node):
         self.left  = left
         self.right = right
         self.parameters = []
+        self.usedVars = set()
 
         if cfg.MATH_FUNC_ALLOWED:
             i = random.randrange(0, len(MathFunctions))
@@ -49,9 +50,13 @@ class MathExpression(gen_program.Node):
         for t in types:
             if t == "double":
                 if veryLucky():
-                    self.parameters.append(gen_inputs.InputGenerator.genInput() )
+                    varName = gen_inputs.InputGenerator.genInput() 
+                    self.parameters.append(varName)
+                    self.usedVars.add(varName)
                 else:
-                    self.parameters.append(gen_program.Expression())
+                    expr = gen_program.Expression()
+                    self.parameters.append(expr)
+                    self.usedVars = self.usedVars.union(expr.usedVars)
             elif t == "int":
                 self.parameters.append("2")
 

@@ -34,7 +34,7 @@ def generateInputs(fullProgName):
             i = gen_inputs.InputGenerator.genInput()
             ret = ret + i + " "
         elif t == "int":
-            ret = ret + "5 "
+            ret = ret + str(cfg.NUM_ITERATIONS) + " "
     return ret
 
 def getTestName(fullProgName):
@@ -142,8 +142,18 @@ def saveResults(rootDir):
         for r in PROG_RESULTS[k]:
             compiler = r.split()[0].split('-')[1]
             opt = r.split()[0].split('-')[2].split('.')[0]
-            input = ",".join(r.split()[1:-1])
-            output = r.split()[-1:][0]
+            # Check if timers were used
+            timerUsed = False
+            if 'time:' in r.split()[-1:][0]:
+                timerUsed = True
+                
+            if timerUsed:
+                input = ",".join(r.split()[1:-2])
+                output = " ".join(r.split()[-2:])
+                #time = r.split()[-1:][0]
+            else:
+                input = ",".join(r.split()[1:-1])
+                output = r.split()[-1:][0]
 
             if input in key_input.keys():
                 key_comp = key_input[input]
@@ -189,7 +199,7 @@ def run(dir):
     # Walk on the directory tree
     for dirName, subdirList, fileList in os.walk(dir):
         for fname in fileList:
-            if fname.endswith('.c'):
+            if fname.endswith('.cpp'):
                 fullPath = dirName+"/"+fname
                 getAllTests(fullPath)
     #runTests()

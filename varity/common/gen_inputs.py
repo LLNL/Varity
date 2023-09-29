@@ -11,9 +11,6 @@ import random
 
 class FPNumberType(Enum):
     normal = 0
-    subnormal = 1
-    almost_overflow = 2
-    almost_underflow = 3
     zero = 4
     
 # Defines classes of FP numerical numbers
@@ -79,12 +76,6 @@ class FP64Input:
         x = random.choice(list(FPNumberType))
         if x == FPNumberType.normal:
             n = FP64Input.getNormal()
-        elif x == FPNumberType.subnormal:
-            n = FP64Input.getSubnormal()
-        elif x == FPNumberType.almost_overflow:
-            n = FP64Input.getAlmostOverflow()
-        elif x == FPNumberType.almost_underflow:
-            n = FP64Input.getAlmostUnderflow()
         elif x == FPNumberType.zero:
             n = "+0.0"
             if lucky():
