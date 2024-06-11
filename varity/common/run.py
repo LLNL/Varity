@@ -8,6 +8,8 @@ import socket
 from type_checking import isTypeReal, isTypeRealPointer
 import multiprocessing as mp
 
+TIMEOUT = 180 #secs
+
 PROG_PER_TEST = {}
 
 # "test.c" ->   [
@@ -93,10 +95,9 @@ def runTests():
         PROG_RESULTS[k] = results
         c = c + 1
     print("")
-'''
 
 def runTestsSerial():
-    global PROG_PER_TEST, PROG_RESULTS
+    global PROG_PER_TEST, PROG_RESULTS, TIMEOUT
     print("Total programs: ", len(PROG_PER_TEST.keys()))
     count = 1
     for k in PROG_PER_TEST.keys():
@@ -114,14 +115,17 @@ def runTestsSerial():
                 try:
                     cmd = t + " " + inputs
                     #print ("Running: " + cmd)
-                    out = subprocess.check_output(cmd, shell=True)
+                    out = subprocess.check_output(cmd, shell=True, timeout=TIMEOUT)
                     res = out.decode('ascii')[:-1]
-                    #print("got: " + res)
                     results.append(t + " " + inputs + " " + res)
+                except subprocess.TimeoutExpired:
+                    print('Timeout for',cmd,'expired!')
+                    results.append(t + " " + inputs + " " + "FAILED-timeout")
                 except subprocess.CalledProcessError as outexc:
                     print("\nError at runtime:", outexc.returncode, outexc.output)
                     print("CMD", cmd)
-                    exit()
+                    #exit()
+                    results.append(t + " " + inputs + " " + "FAILED-runtime_error")
     
         PROG_RESULTS[k] = results
     print("")

@@ -730,7 +730,8 @@ class ForLoopBlock(Node):
         if self.dataSharingAttribs.includesReduction:
             rv = "reduction({}: comp)".format(self.dataSharingAttribs.getReductionOp())
 
-        t = "#pragma omp parallel default(shared) {} {} {} {} num_threads({})\n".format(sv, pv, fpv, rv, cfg.ARRAY_SIZE)
+        #t = "#pragma omp parallel default(shared) {} {} {} {} num_threads({})\n".format(sv, pv, fpv, rv, cfg.ARRAY_SIZE)
+        t = "#pragma omp parallel default(shared) {} {} {} {} num_threads(36)\n".format(sv, pv, fpv, rv)
         t += "{\n"
         # Temporal variables used for intermmediate computations can be defined in
         # critical sections, but this reduces their scope to only those critical blocks. Instead,
@@ -1085,7 +1086,7 @@ class Program():
         print("Compiling: " + fileName)
         try:
             if self.device == False:
-                cmd = "clang -std=c99 -o " + fileName + ".exe " + fileName
+                cmd = "clang -o " + fileName + ".exe " + fileName
             else: # compile for device case
                 cmd = "nvcc -o " + fileName + ".exe " + fileName
 

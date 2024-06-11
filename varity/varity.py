@@ -43,15 +43,15 @@ def getExtraOptimization(compiler_name, e: int):
     if "clang" in compiler_name:
         if e == 1:
             ret = "-ffp-contract=off"
-        ret = ret + " -std=c99"
+        #ret = ret + " -std=c99"
     elif "gcc" in compiler_name:
         if e == 1:
             ret = "-ffp-contract=off"
-        ret = ret + " -std=c99"
+        #ret = ret + " -std=c99"
     elif "pgi" in compiler_name:
         if e == 1:
             ret = "-nofma"
-        ret = ret + " -c99"
+        #ret = ret + " -c99"
     elif "nvcc" in compiler_name:
         if e == 1:
             ret = "--fmad=false"
@@ -59,6 +59,9 @@ def getExtraOptimization(compiler_name, e: int):
     elif "xlc" in compiler_name:
         if e == 1:
             ret = "-qfloat=nomaf"
+
+    if cfg.PARALLEL_PROG:
+        ret += " -fopenmp"
 
     return ret
 
@@ -98,7 +101,7 @@ def generateTests():
         
         # Write the program source code
         for t in range(cfg.TESTS_PER_GROUP): 
-            fileName = p + "/_test_" + str(t+1) + ".c"
+            fileName = p + "/_test_" + str(t+1) + ".cpp"
             fileNameList.append(fileName)
 
     cpuCount = mp.cpu_count()
@@ -118,7 +121,7 @@ def compileTests(path):
     for g in range(cfg.NUM_GROUPS):
         p = path + "/" + cfg.TESTS_DIR + "/_group_" + str(g+1)
         for t in range(cfg.TESTS_PER_GROUP):
-            fileName = "_test_" + str(t+1) + ".c"
+            fileName = "_test_" + str(t+1) + ".cpp"
             for c in cfg.COMPILERS:
                 compiler_name = c[0]
                 compiler_path = c[1]
