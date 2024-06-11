@@ -246,7 +246,18 @@ class Expression(Node):
                 if self.isParallel:
                     return p + "comp[omp_get_thread_num()] " + self.code + " " + t + ";"
                 return p +  "comp[i % {}] ".format(cfg.ARRAY_SIZE) + self.code + " " + t + ";"
-            return p + "comp " + self.code + " " + t + ";"
+            
+            # Add atomic pragma
+            if self.isParallel:
+                # Chek if there is no previous atomic pragma
+                lines = p.strip().split('\n')
+                if "#pragma omp atomic" not in lines[-1:] and "#pragma omp atomic" not in lines[-2:-1]:
+                    atomic_pragma = "#pragma omp atomic\n"
+                    p += atomic_pragma
+            
+            # Return assigment
+            ret = p + "comp " + self.code + " " + t + ";"
+            return ret
         else:
             return t
 
@@ -511,7 +522,7 @@ class OperationsBlock(Node):
                     # Randomly use atomic update when a shared double is used for comp.
                     if lucky() and low == high:
                         p += "// New atomic section!!!\n"
-                        p += "#pragma omp atomic \n"
+                        p += "#pragma omp atomic\n"
                     else:
                         p += "#pragma omp critical\n{ // BEGIN CRITICAL\n"
                         inCriticalSection = self.id
@@ -1126,9 +1137,9 @@ class Program():
 
 if __name__ == "__main__":
 
-    #p = Program()
-    #(c, allTypes) = p.printCode(True)
-    #print(p.printCode()[0])
+    p = Program()
+    (c, allTypes) = p.printCode(True)
+    print(p.printCode()[0])
     #print(p.printCode(True)[0])
     
     #print(calledNodes)
@@ -1141,8 +1152,8 @@ if __name__ == "__main__":
     #print(o.printCode())
     
     # ---- Class Testing ----
-    fb = ForLoopBlock()
-    print(fb.printCode())
+    #fb = ForLoopBlock()
+    #print(fb.printCode())
     #ep = Expression()
     #print(ep.printCode())
-    print(calledNodes)
+    #print(calledNodes)
