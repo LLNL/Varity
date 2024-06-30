@@ -51,7 +51,6 @@ def getAllTests(fullProgName):
     allTests = glob.glob(fullProgName+"*.exe")
     PROG_PER_TEST[fullProgName] = allTests
 
-'''
 def spawnProc(config):
     (cmd, results, lock) = config
     try:

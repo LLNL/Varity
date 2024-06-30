@@ -63,6 +63,9 @@ def getExtraOptimization(compiler_name, e: int):
     if cfg.PARALLEL_PROG:
         ret += " -fopenmp"
 
+    # Hack to add extra optimization options or flags
+    ret += " /usr/workspace/wsa/laguna/compilers/gcc/install-13.1.0/lib64/libstdc++.a"
+
     return ret
 
 def compileCode(config):

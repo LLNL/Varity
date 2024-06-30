@@ -26,6 +26,7 @@ def findCases(data):
   gcc_outliers = []
   intel_outliers = []
   failure_cases = []
+  cases = 0
 
   for test_file in data:
     for inputs in data[test_file]:
@@ -50,16 +51,19 @@ def findCases(data):
             if opt == 'O3':
               gcc = t
 
-          if 'icpc' in comp:
+          if 'icpx' in comp:
             if opt == 'O3':
               icpc = t
 
       #if icpc < clang and icpc < gcc:
       #  print(test_file, 'icpc=', icpc, 'clang', clang, 'gcc=', gcc)
+      #print('clang, gcc, icpc', clang, gcc, icpc)
 
       # we only care for 1000 microsecs
       if min(gcc, icpc, clang) < 1000:
         continue
+      else:
+        cases += 1
 
       # Clang outliers
       if (abs(icpc-gcc) / min(icpc, gcc)) <= COMPARABLE_FACTOR: # gcc, intel are comparable
@@ -76,7 +80,7 @@ def findCases(data):
       # Gcc outliers
       if (abs(clang-icpc) / min(clang, icpc)) <= COMPARABLE_FACTOR: # gcc, intel are comparable
         if (gcc / min(clang, icpc)) >= OUTLIER_FACTOR:
-          gcc_outliers.append((test_file), inputs)
+          gcc_outliers.append((test_file, inputs))
           print('GCC outlier:', test_file, 'icpc=', icpc, 'clang', clang, 'gcc=', gcc)
 
   # Save in a directory
@@ -105,6 +109,7 @@ def findCases(data):
       with open(p+'/'+name+'_inputs.txt', "w") as text_file:
         text_file.write(' '.join(t[1].split(',')))
 
+  print('Total cases:', cases)
 
 if __name__ == '__main__':
   filename = sys.argv[1]

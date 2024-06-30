@@ -248,12 +248,13 @@ class Expression(Node):
                 return p +  "comp[i % {}] ".format(cfg.ARRAY_SIZE) + self.code + " " + t + ";"
             
             # Add atomic pragma
-            if self.isParallel:
-                # Chek if there is no previous atomic pragma
-                lines = p.strip().split('\n')
-                if "#pragma omp atomic" not in lines[-1:] and "#pragma omp atomic" not in lines[-2:-1]:
-                    atomic_pragma = "#pragma omp atomic\n"
-                    p += atomic_pragma
+            # @bug: removing since this could be buggy for reductions
+            #if self.isParallel:
+            #    # Chek if there is no previous atomic pragma
+            #    lines = p.strip().split('\n')
+            #    if "#pragma omp atomic" not in lines[-1:] and "#pragma omp atomic" not in lines[-2:-1]:
+            #        atomic_pragma = "#pragma omp atomic\n"
+            #        p += atomic_pragma
             
             # Return assigment
             ret = p + "comp " + self.code + " " + t + ";"
